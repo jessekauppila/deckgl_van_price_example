@@ -1,101 +1,214 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import React, { useState } from 'react';
+import { createRoot } from 'react-dom/client';
+import { Map } from 'react-map-gl/maplibre';
+import DeckGL from '@deck.gl/react';
+import { GeoJsonLayer, PolygonLayer } from '@deck.gl/layers';
+import {
+  LightingEffect,
+  AmbientLight,
+  _SunLight as SunLight,
+} from '@deck.gl/core';
+import { scaleThreshold } from 'd3-scale';
+
+import type {
+  Color,
+  Position,
+  PickingInfo,
+  MapViewState,
+} from '@deck.gl/core';
+import type { Feature, Geometry } from 'geojson';
+
+// Source data GeoJSON
+const DATA_URL =
+  'https://raw.githubusercontent.com/visgl/deck.gl-data/master/examples/geojson/vancouver-blocks.json'; // eslint-disable-line
+
+export const COLOR_SCALE = scaleThreshold<number, Color>()
+  .domain([
+    -0.6, -0.45, -0.3, -0.15, 0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9,
+    1.05, 1.2,
+  ])
+  .range([
+    [65, 182, 196],
+    [127, 205, 187],
+    [199, 233, 180],
+    [237, 248, 177],
+    // zero
+    [255, 255, 204],
+    [255, 237, 160],
+    [254, 217, 118],
+    [254, 178, 76],
+    [253, 141, 60],
+    [252, 78, 42],
+    [227, 26, 28],
+    [189, 0, 38],
+    [128, 0, 38],
+  ]);
+
+const INITIAL_VIEW_STATE: MapViewState = {
+  latitude: 49.254,
+  longitude: -123.13,
+  zoom: 11,
+  maxZoom: 16,
+  pitch: 45,
+  bearing: 0,
+};
+
+const MAP_STYLE =
+  'https://basemaps.cartocdn.com/gl/positron-nolabels-gl-style/style.json';
+
+const ambientLight = new AmbientLight({
+  color: [255, 255, 255],
+  intensity: 1.0,
+});
+
+const dirLight = new SunLight({
+  timestamp: Date.UTC(2019, 7, 1, 22),
+  color: [255, 255, 255],
+  intensity: 1.0,
+  _shadow: true,
+});
+
+const landCover: Position[][] = [
+  [
+    [-123.0, 49.196],
+    [-123.0, 49.324],
+    [-123.306, 49.324],
+    [-123.306, 49.196],
+  ],
+];
+
+type BlockProperties = {
+  valuePerParcel: number;
+  valuePerSqm: number;
+  growth: number;
+};
+
+function getTooltip({
+  object,
+}: PickingInfo<Feature<Geometry, BlockProperties>>) {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+    object && {
+      html: `\
+  <div><b>Average Property Value</b></div>
+  <div>${object.properties.valuePerParcel} / parcel</div>
+  <div>${object.properties.valuePerSqm} / m<sup>2</sup></div>
+  <div><b>Growth</b></div>
+  <div>${Math.round(object.properties.growth * 100)}%</div>
+  `,
+    }
   );
 }
+
+export default function App({
+  data = DATA_URL,
+  mapStyle = MAP_STYLE,
+}: {
+  data?: string | Feature<Geometry, BlockProperties>[];
+  mapStyle?: string;
+}) {
+  const [effects] = useState(() => {
+    const lightingEffect = new LightingEffect({
+      ambientLight,
+      dirLight,
+    });
+    lightingEffect.shadowColor = [0, 0, 0, 0.5];
+    return [lightingEffect];
+  });
+
+  const layers = [
+    // only needed when using shadows - a plane for shadows to drop on
+    new PolygonLayer<Position[]>({
+      id: 'ground',
+      data: landCover,
+      stroked: false,
+      getPolygon: (f) => f,
+      getFillColor: [0, 0, 0, 0],
+    }),
+    new GeoJsonLayer<BlockProperties>({
+      id: 'geojson',
+      data,
+      opacity: 0.8,
+      stroked: false,
+      filled: true,
+      extruded: true,
+      wireframe: true,
+      getElevation: (f) => Math.sqrt(f.properties.valuePerSqm) * 10,
+      getFillColor: (f) => COLOR_SCALE(f.properties.growth),
+      getLineColor: [255, 255, 255],
+      pickable: true,
+    }),
+  ];
+
+  return (
+    <DeckGL
+      layers={layers}
+      effects={effects}
+      initialViewState={INITIAL_VIEW_STATE}
+      controller={true}
+      getTooltip={getTooltip}
+    >
+      <Map reuseMaps mapStyle={mapStyle} />
+    </DeckGL>
+  );
+}
+
+export function renderToDOM(container: HTMLDivElement) {
+  createRoot(container).render(<App />);
+}
+
+// export default function Home() {
+//   return (
+//     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
+//       <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start"></main>
+//       <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
+//         <a
+//           className="flex items-center gap-2 hover:underline hover:underline-offset-4"
+//           href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+//           target="_blank"
+//           rel="noopener noreferrer"
+//         >
+//           <Image
+//             aria-hidden
+//             src="/file.svg"
+//             alt="File icon"
+//             width={16}
+//             height={16}
+//           />
+//           Learn
+//         </a>
+//         <a
+//           className="flex items-center gap-2 hover:underline hover:underline-offset-4"
+//           href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+//           target="_blank"
+//           rel="noopener noreferrer"
+//         >
+//           <Image
+//             aria-hidden
+//             src="/window.svg"
+//             alt="Window icon"
+//             width={16}
+//             height={16}
+//           />
+//           Examples
+//         </a>
+//         <a
+//           className="flex items-center gap-2 hover:underline hover:underline-offset-4"
+//           href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+//           target="_blank"
+//           rel="noopener noreferrer"
+//         >
+//           <Image
+//             aria-hidden
+//             src="/globe.svg"
+//             alt="Globe icon"
+//             width={16}
+//             height={16}
+//           />
+//           Go to nextjs.org →
+//         </a>
+//       </footer>
+//     </div>
+//   );
+// }
