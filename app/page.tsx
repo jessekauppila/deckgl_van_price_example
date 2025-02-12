@@ -5,128 +5,40 @@ import { createRoot } from 'react-dom/client';
 import { Map } from 'react-map-gl/maplibre';
 import DeckGL from '@deck.gl/react';
 import { GeoJsonLayer, PolygonLayer } from '@deck.gl/layers';
-import {
-  LightingEffect,
-  AmbientLight,
-  _SunLight as SunLight,
-} from '@deck.gl/core';
-import { scaleThreshold } from 'd3-scale';
 
-import type {
-  Color,
-  Position,
-  PickingInfo,
-  MapViewState,
-} from '@deck.gl/core';
 import type { Feature, Geometry } from 'geojson';
-
-// Source data GeoJSON
-const DATA_URL =
-  'https://raw.githubusercontent.com/visgl/deck.gl-data/master/examples/geojson/vancouver-blocks.json'; // eslint-disable-line
-
-export const COLOR_SCALE = scaleThreshold<number, Color>()
-  .domain([
-    -0.6, -0.45, -0.3, -0.15, 0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9,
-    1.05, 1.2,
-  ])
-  .range([
-    [65, 182, 196],
-    [127, 205, 187],
-    [199, 233, 180],
-    [237, 248, 177],
-    // zero
-    [255, 255, 204],
-    [255, 237, 160],
-    [254, 217, 118],
-    [254, 178, 76],
-    [253, 141, 60],
-    [252, 78, 42],
-    [227, 26, 28],
-    [189, 0, 38],
-    [128, 0, 38],
-  ]);
-
-const INITIAL_VIEW_STATE: MapViewState = {
-  latitude: 49.254,
-  longitude: -123.13,
-  zoom: 11,
-  maxZoom: 16,
-  pitch: 45,
-  bearing: 0,
-};
-
-const MAP_STYLE =
-  'https://basemaps.cartocdn.com/gl/positron-nolabels-gl-style/style.json';
-
-const ambientLight = new AmbientLight({
-  color: [255, 255, 255],
-  intensity: 1.0,
-});
-
-const dirLight = new SunLight({
-  timestamp: Date.UTC(2019, 7, 1, 22),
-  color: [255, 255, 255],
-  intensity: 1.0,
-  _shadow: true,
-});
-
-const landCover: Position[][] = [
-  [
-    [-123.0, 49.196],
-    [-123.0, 49.324],
-    [-123.306, 49.324],
-    [-123.306, 49.196],
-  ],
-];
-
-type BlockProperties = {
-  valuePerParcel: number;
-  valuePerSqm: number;
-  growth: number;
-};
-
-function getTooltip({
-  object,
-}: PickingInfo<Feature<Geometry, BlockProperties>>) {
-  return (
-    object && {
-      html: `\
-  <div><b>Average Property Value</b></div>
-  <div>${object.properties.valuePerParcel} / parcel</div>
-  <div>${object.properties.valuePerSqm} / m<sup>2</sup></div>
-  <div><b>Growth</b></div>
-  <div>${Math.round(object.properties.growth * 100)}%</div>
-  `,
-    }
-  );
-}
+import { station_data } from './station_data';
+import {
+  snowDepth_COLOR_SCALE,
+  snowDepth_INITIAL_VIEW_STATE,
+  snowDepth_MAP_STYLE,
+  snowDepth_lightingEffect,
+  snowDepth_weatherToGeoJSON,
+  snowDepth_getTooltip,
+  SnowDepth_BlockProperties,
+} from './deckGL/snowDepthChange';
 
 export default function App({
-  data = DATA_URL,
-  mapStyle = MAP_STYLE,
+  data = snowDepth_weatherToGeoJSON(station_data),
+  mapStyle = snowDepth_MAP_STYLE,
 }: {
-  data?: string | Feature<Geometry, BlockProperties>[];
+  data?: string | Feature<Geometry, SnowDepth_BlockProperties>[];
   mapStyle?: string;
 }) {
-  const [effects] = useState(() => {
-    const lightingEffect = new LightingEffect({
-      ambientLight,
-      dirLight,
-    });
-    lightingEffect.shadowColor = [0, 0, 0, 0.5];
-    return [lightingEffect];
-  });
+  const [effects] = useState(() => [snowDepth_lightingEffect]);
 
-  const layers = [
+  const elevScale = 5000;
+
+  const snowDepth_layer = [
     // only needed when using shadows - a plane for shadows to drop on
-    new PolygonLayer<Position[]>({
-      id: 'ground',
-      data: landCover,
-      stroked: false,
-      getPolygon: (f) => f,
-      getFillColor: [0, 0, 0, 0],
-    }),
-    new GeoJsonLayer<BlockProperties>({
+    // new PolygonLayer<Position[]>({
+    //   id: 'ground',
+    //   data: landCover,
+    //   stroked: false,
+    //   getPolygon: (f) => f,
+    //   getFillColor: [0, 0, 0, 0],
+    // }),
+    new GeoJsonLayer<SnowDepth_BlockProperties>({
       id: 'geojson',
       data,
       opacity: 0.8,
@@ -134,20 +46,47 @@ export default function App({
       filled: true,
       extruded: true,
       wireframe: true,
-      getElevation: (f) => Math.sqrt(f.properties.valuePerSqm) * 10,
-      getFillColor: (f) => COLOR_SCALE(f.properties.growth),
+
+      getElevation: (f) => {
+        const baseHeight = f.properties.totalSnowDepthChange ?? 0;
+        const finalHeight = baseHeight * elevScale;
+        console.log(`Station: ${f.properties.stationName}`);
+        console.log(
+          `Snow Change: ${f.properties.totalSnowDepthChange}`
+        );
+        console.log(`Base Height (before scale): ${baseHeight}`);
+        console.log(`Elevation Scale: ${elevScale}`);
+        console.log(`Final Height (after scale): ${finalHeight}`);
+        console.log('-------------------');
+        return baseHeight; // Layer will apply elevationScale automatically
+      },
+      elevationRange: [0, 15000],
+      elevationScale: elevScale,
+      getFillColor: (f) =>
+        snowDepth_COLOR_SCALE(f.properties.totalSnowDepthChange ?? 0),
       getLineColor: [255, 255, 255],
       pickable: true,
+      material: {
+        ambient: 0.64,
+        diffuse: 0.6,
+        shininess: 32,
+        specularColor: [51, 51, 51],
+      },
+
+      //coverage: 1,
+      transitions: {
+        elevationScale: 3000,
+      },
     }),
   ];
 
   return (
     <DeckGL
-      layers={layers}
+      layers={snowDepth_layer}
       effects={effects}
-      initialViewState={INITIAL_VIEW_STATE}
+      initialViewState={snowDepth_INITIAL_VIEW_STATE}
       controller={true}
-      getTooltip={getTooltip}
+      getTooltip={snowDepth_getTooltip}
     >
       <Map reuseMaps mapStyle={mapStyle} />
     </DeckGL>
@@ -157,58 +96,3 @@ export default function App({
 export function renderToDOM(container: HTMLDivElement) {
   createRoot(container).render(<App />);
 }
-
-// export default function Home() {
-//   return (
-//     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-//       <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start"></main>
-//       <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-//         <a
-//           className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-//           href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-//           target="_blank"
-//           rel="noopener noreferrer"
-//         >
-//           <Image
-//             aria-hidden
-//             src="/file.svg"
-//             alt="File icon"
-//             width={16}
-//             height={16}
-//           />
-//           Learn
-//         </a>
-//         <a
-//           className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-//           href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-//           target="_blank"
-//           rel="noopener noreferrer"
-//         >
-//           <Image
-//             aria-hidden
-//             src="/window.svg"
-//             alt="Window icon"
-//             width={16}
-//             height={16}
-//           />
-//           Examples
-//         </a>
-//         <a
-//           className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-//           href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-//           target="_blank"
-//           rel="noopener noreferrer"
-//         >
-//           <Image
-//             aria-hidden
-//             src="/globe.svg"
-//             alt="Globe icon"
-//             width={16}
-//             height={16}
-//           />
-//           Go to nextjs.org →
-//         </a>
-//       </footer>
-//     </div>
-//   );
-// }

@@ -21,7 +21,9 @@
     "d3-scale": "^4.0.0",
     "deck.gl": "^9.0.0",
     "maplibre-gl": "^3.0.0",
-    "react-map-gl": "^7.1.0"
+    "react-map-gl": "^7.1.0",
+    "@loaders.gl/csv": "^4.2.0",
+    "supercluster": "^8.0.1"
   },
   "devDependencies": {
     "typescript": "^5",
