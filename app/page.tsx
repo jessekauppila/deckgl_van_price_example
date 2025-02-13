@@ -36,7 +36,7 @@ const MAP_VIEW = new MapView({ repeat: true });
 const DATA_URL =
   'https://raw.githubusercontent.com/visgl/deck.gl-data/master/examples/icon/meteorites.json'; // eslint-disable-line
 
-type Meterite = {
+type IconWeather = {
   coordinates: [longitude: number, latitude: number];
   name: string;
   class: string;
@@ -44,7 +44,9 @@ type Meterite = {
   year: number;
 };
 
-function renderTooltip(info: IconClusterLayerPickingInfo<Meterite>) {
+function renderTooltip(
+  info: IconClusterLayerPickingInfo<IconWeather>
+) {
   const { object, objects, x, y } = info;
 
   if (objects) {
@@ -102,7 +104,7 @@ export default function App({
   mapStyle?: string;
   showCluster?: boolean;
 }) {
-  const [meteorites, setMeteorites] = useState<Meterite[]>([]);
+  const [meteorites, setMeteorites] = useState<IconWeather[]>([]);
   const [iconAssetsLoaded, setIconAssetsLoaded] = useState(false);
 
   useEffect(() => {
@@ -132,7 +134,7 @@ export default function App({
 
   //icon layer
   const [hoverInfo, setHoverInfo] =
-    useState<IconClusterLayerPickingInfo<Meterite> | null>(null);
+    useState<IconClusterLayerPickingInfo<IconWeather> | null>(null);
 
   const hideTooltip = useCallback(() => {
     setHoverInfo(null);
@@ -145,7 +147,7 @@ export default function App({
     }
   }, []);
 
-  const layerProps: IconLayerProps<Meterite> = {
+  const layerProps: IconLayerProps<IconWeather> = {
     id: 'icon',
     data: meteorites,
     pickable: true,
@@ -225,7 +227,7 @@ export default function App({
     ...(meteorites.length > 0 && iconAssetsLoaded
       ? [
           showCluster
-            ? new IconClusterLayer<Meterite>({
+            ? new IconClusterLayer<IconWeather>({
                 ...layerProps,
                 id: 'icon-cluster',
                 sizeScale: 40,
@@ -264,13 +266,64 @@ export default function App({
       effects={effects}
       initialViewState={INITIAL_VIEW_STATE}
       controller={true}
-      getTooltip={snowDepth_getTooltip}
-      onViewStateChange={hideTooltip}
-      onClick={expandTooltip}
+      getTooltip={(info) => {
+        if (!info.object) return null;
+
+        try {
+          // Handle snow depth layer
+          if (
+            info.layer?.id === 'geojson' &&
+            info.object?.properties
+          ) {
+            return {
+              html: `
+                <div><b>Snow Depth Change</b></div>
+                <div>${info.object.properties.totalSnowDepthChange} in</div>
+                <div><b>Station Name</b></div>
+                <div>${info.object.properties.stationName}</div>
+              `,
+            };
+          }
+
+          // Handle meteorite cluster layer
+          if (
+            info.layer?.id === 'icon-cluster' &&
+            info.object?.properties
+          ) {
+            return {
+              html: `
+                <div>${
+                  (info as IconClusterLayerPickingInfo<IconWeather>)
+                    .objects?.length
+                } meteorites in this area</div>
+              `,
+            };
+          }
+
+          // Handle individual meteorite
+          if (
+            (info.layer?.id === 'icon-cluster' ||
+              info.layer?.id === 'icon') &&
+            info.object
+          ) {
+            return {
+              html: `
+                <div><b>${info.object.name || 'Unknown'}</b></div>
+                <div>Year: ${info.object.year || 'Unknown'}</div>
+                <div>Class: ${info.object.class || 'Unknown'}</div>
+                <div>Mass: ${info.object.mass || 'Unknown'}g</div>
+              `,
+            };
+          }
+        } catch (error) {
+          console.error('Tooltip error:', error);
+          return null;
+        }
+
+        return null;
+      }}
     >
       <Map reuseMaps mapStyle={mapStyle} />
-
-      {hoverInfo && renderTooltip(hoverInfo)}
     </DeckGL>
   );
 }
