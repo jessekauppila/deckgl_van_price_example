@@ -324,6 +324,8 @@ export default function App({
       }}
     >
       <Map reuseMaps mapStyle={mapStyle} />
+
+      {hoverInfo && renderTooltip(hoverInfo)}
     </DeckGL>
   );
 }
