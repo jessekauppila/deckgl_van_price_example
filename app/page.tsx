@@ -1,35 +1,187 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Map } from 'react-map-gl/maplibre';
 import DeckGL from '@deck.gl/react';
-import { GeoJsonLayer, PolygonLayer } from '@deck.gl/layers';
+import { GeoJsonLayer } from '@deck.gl/layers';
 
-import type { Feature, Geometry } from 'geojson';
+import type { Feature, FeatureCollection, Geometry } from 'geojson';
 import { station_data } from './station_data';
 import {
   snowDepth_COLOR_SCALE,
-  snowDepth_INITIAL_VIEW_STATE,
-  snowDepth_MAP_STYLE,
+  INITIAL_VIEW_STATE,
+  MAP_STYLE,
   snowDepth_lightingEffect,
   snowDepth_weatherToGeoJSON,
   snowDepth_getTooltip,
   SnowDepth_BlockProperties,
 } from './deckGL/snowDepthChange';
 
-export default function App({
-  data = snowDepth_weatherToGeoJSON(station_data),
-  mapStyle = snowDepth_MAP_STYLE,
-}: {
-  data?: string | Feature<Geometry, SnowDepth_BlockProperties>[];
-  mapStyle?: string;
-}) {
-  const [effects] = useState(() => [snowDepth_lightingEffect]);
+//icon layer
 
+import { MapView } from '@deck.gl/core';
+import { IconLayer } from '@deck.gl/layers';
+import IconClusterLayer from './deckGL/icon-cluster-layer';
+import type { IconClusterLayerPickingInfo } from './deckGL/icon-cluster-layer';
+import type { PickingInfo, MapViewState } from '@deck.gl/core';
+import type { IconLayerProps } from '@deck.gl/layers';
+//end icon layer
+
+//////////////////////
+
+const MAP_VIEW = new MapView({ repeat: true });
+
+// Source data CSV
+const DATA_URL =
+  'https://raw.githubusercontent.com/visgl/deck.gl-data/master/examples/icon/meteorites.json'; // eslint-disable-line
+
+type Meterite = {
+  coordinates: [longitude: number, latitude: number];
+  name: string;
+  class: string;
+  mass: number;
+  year: number;
+};
+
+function renderTooltip(info: IconClusterLayerPickingInfo<Meterite>) {
+  const { object, objects, x, y } = info;
+
+  if (objects) {
+    return (
+      <div
+        className="tooltip interactive"
+        style={{ left: x, top: y }}
+      >
+        {objects.map(({ name, year, mass, class: meteorClass }) => {
+          return (
+            <div key={name}>
+              <h5>{name}</h5>
+              <div>Year: {year || 'unknown'}</div>
+              <div>Class: {meteorClass}</div>
+              <div>Mass: {mass}g</div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  if (!object) {
+    return null;
+  }
+
+  return 'cluster' in object && object.cluster ? (
+    <div className="tooltip" style={{ left: x, top: y }}>
+      {object.point_count} records
+    </div>
+  ) : (
+    <div className="tooltip" style={{ left: x, top: y }}>
+      {object.name} {object.year ? `(${object.year})` : ''}
+    </div>
+  );
+}
+
+/////////////////
+
+export default function App({
+  weatherData = snowDepth_weatherToGeoJSON(station_data),
+  iconData = DATA_URL,
+  iconMapping = '/exampleData/location-icon-mapping.json',
+  iconAtlas = '/exampleData/location-icon-atlas.png',
+  showCluster = true,
+  mapStyle = MAP_STYLE,
+}: {
+  weatherData?: FeatureCollection<
+    Geometry,
+    SnowDepth_BlockProperties
+  >;
+  iconData?: string;
+  iconMapping?: string;
+  iconAtlas?: string;
+  mapStyle?: string;
+  showCluster?: boolean;
+}) {
+  const [meteorites, setMeteorites] = useState<Meterite[]>([]);
+  const [iconAssetsLoaded, setIconAssetsLoaded] = useState(false);
+
+  useEffect(() => {
+    // Check if icon assets are loading
+    Promise.all([
+      fetch(iconMapping).then((r) => {
+        if (!r.ok)
+          throw new Error(`Failed to load icon mapping: ${r.status}`);
+        return r.json();
+      }),
+      new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(true);
+        img.onerror = () =>
+          reject(new Error('Failed to load icon atlas'));
+        img.src = iconAtlas;
+      }),
+    ]).then(() => {
+      setIconAssetsLoaded(true);
+    });
+
+    // Fetch meteorite data
+    fetch(iconData)
+      .then((r) => r.json())
+      .then((data) => setMeteorites(data));
+  }, [iconData, iconMapping, iconAtlas]);
+
+  //icon layer
+  const [hoverInfo, setHoverInfo] =
+    useState<IconClusterLayerPickingInfo<Meterite> | null>(null);
+
+  const hideTooltip = useCallback(() => {
+    setHoverInfo(null);
+  }, []);
+  const expandTooltip = useCallback((info: PickingInfo) => {
+    if (info.picked && showCluster) {
+      setHoverInfo(info);
+    } else {
+      setHoverInfo(null);
+    }
+  }, []);
+
+  const layerProps: IconLayerProps<Meterite> = {
+    id: 'icon',
+    data: meteorites,
+    pickable: true,
+    getPosition: (d) => d.coordinates,
+    iconAtlas,
+    iconMapping,
+    getIcon: (d) => {
+      console.log('Getting icon for:', d);
+      return 'marker';
+    },
+    sizeScale: 20,
+    sizeMinPixels: 6,
+    // Add onError callback to catch any layer errors
+    onError: (error) => {
+      console.error('Icon Layer Error:', error);
+    },
+    // Add updateTriggers to ensure layer updates
+    updateTriggers: {
+      getIcon: meteorites,
+      getPosition: meteorites,
+    },
+  };
+
+  console.log('Layer Props:', layerProps);
+
+  if (hoverInfo === null || !hoverInfo.objects) {
+    layerProps.onHover = setHoverInfo;
+  }
+  //end icon layer
+
+  //snowDepthlayer
+
+  const [effects] = useState(() => [snowDepth_lightingEffect]);
   const elevScale = 5000;
 
-  const snowDepth_layer = [
+  const layers = [
     // only needed when using shadows - a plane for shadows to drop on
     // new PolygonLayer<Position[]>({
     //   id: 'ground',
@@ -38,30 +190,21 @@ export default function App({
     //   getPolygon: (f) => f,
     //   getFillColor: [0, 0, 0, 0],
     // }),
+
+    //snow depth change layer
     new GeoJsonLayer<SnowDepth_BlockProperties>({
       id: 'geojson',
-      data,
+      data: weatherData,
       opacity: 0.8,
       stroked: false,
       filled: true,
       extruded: true,
       wireframe: true,
-
       getElevation: (f) => {
         const baseHeight = f.properties.totalSnowDepthChange ?? 0;
-        const finalHeight = baseHeight * elevScale;
-        console.log(`Station: ${f.properties.stationName}`);
-        console.log(
-          `Snow Change: ${f.properties.totalSnowDepthChange}`
-        );
-        console.log(`Base Height (before scale): ${baseHeight}`);
-        console.log(`Elevation Scale: ${elevScale}`);
-        console.log(`Final Height (after scale): ${finalHeight}`);
-        console.log('-------------------');
-        return baseHeight; // Layer will apply elevationScale automatically
+        return baseHeight;
       },
-      elevationRange: [0, 15000],
-      elevationScale: elevScale,
+      elevationScale: 5000,
       getFillColor: (f) =>
         snowDepth_COLOR_SCALE(f.properties.totalSnowDepthChange ?? 0),
       getLineColor: [255, 255, 255],
@@ -72,23 +215,62 @@ export default function App({
         shininess: 32,
         specularColor: [51, 51, 51],
       },
-
       //coverage: 1,
       transitions: {
         elevationScale: 3000,
       },
     }),
+
+    // Only add icon layer when we have data and assets
+    ...(meteorites.length > 0 && iconAssetsLoaded
+      ? [
+          showCluster
+            ? new IconClusterLayer<Meterite>({
+                ...layerProps,
+                id: 'icon-cluster',
+                sizeScale: 40,
+                getPosition: (d) => {
+                  console.log('Cluster position:', d.coordinates);
+                  return d.coordinates;
+                },
+                radiusScale: 60,
+                radiusMinPixels: 20,
+                radiusMaxPixels: 100,
+                onAfterUpdate: ({ layer }) => {
+                  console.log('Cluster layer updated:', layer.props);
+                },
+              })
+            : new IconLayer({
+                ...layerProps,
+                id: 'icon',
+                getIcon: (d) => 'marker',
+                sizeUnits: 'pixels',
+                sizeScale: 20,
+                sizeMinPixels: 10,
+                onAfterUpdate: ({ layer }) => {
+                  console.log('Icon layer updated:', layer.props);
+                },
+              }),
+        ]
+      : []),
   ];
+
+  console.log('Final Layers:', layers);
 
   return (
     <DeckGL
-      layers={snowDepth_layer}
+      layers={layers}
+      views={MAP_VIEW}
       effects={effects}
-      initialViewState={snowDepth_INITIAL_VIEW_STATE}
+      initialViewState={INITIAL_VIEW_STATE}
       controller={true}
       getTooltip={snowDepth_getTooltip}
+      onViewStateChange={hideTooltip}
+      onClick={expandTooltip}
     >
       <Map reuseMaps mapStyle={mapStyle} />
+
+      {hoverInfo && renderTooltip(hoverInfo)}
     </DeckGL>
   );
 }

@@ -28,7 +28,7 @@ export const snowDepth_COLOR_SCALE = scaleThreshold<number, Color>()
     [209, 55, 78],
   ] as Color[]);
 
-export const snowDepth_INITIAL_VIEW_STATE: MapViewState = {
+export const INITIAL_VIEW_STATE: MapViewState = {
   latitude: 48.863017,
   longitude: -121.67785,
   zoom: 6,
@@ -37,7 +37,7 @@ export const snowDepth_INITIAL_VIEW_STATE: MapViewState = {
   bearing: 0,
 };
 
-export const snowDepth_MAP_STYLE =
+export const MAP_STYLE =
   'https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json';
 
 const ambientLight = new AmbientLight({
