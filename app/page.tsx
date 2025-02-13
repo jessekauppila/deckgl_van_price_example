@@ -18,8 +18,6 @@ import {
   SnowDepth_BlockProperties,
 } from './deckGL/snowDepthChange';
 
-//icon layer
-
 import { MapView } from '@deck.gl/core';
 import { IconLayer } from '@deck.gl/layers';
 import IconClusterLayer from './deckGL/icon-cluster-layer';
@@ -230,17 +228,21 @@ export default function App({
             ? new IconClusterLayer<IconWeather>({
                 ...layerProps,
                 id: 'icon-cluster',
-                sizeScale: 40,
+                sizeScale: 20,
                 getPosition: (d) => {
-                  console.log('Cluster position:', d.coordinates);
+                  //console.log('Cluster position:', d.coordinates);
                   return d.coordinates;
                 },
                 radiusScale: 60,
                 radiusMinPixels: 20,
                 radiusMaxPixels: 100,
-                onAfterUpdate: ({ layer }) => {
-                  console.log('Cluster layer updated:', layer.props);
-                },
+                //onAfterUpdate: ({
+                //layer,
+                //}: {
+                //layer: IconClusterLayer<IconWeather>;
+                //}) => {
+                //console.log('Cluster layer updated:', layer.props);
+                //},
               })
             : new IconLayer({
                 ...layerProps,
@@ -266,6 +268,8 @@ export default function App({
       effects={effects}
       initialViewState={INITIAL_VIEW_STATE}
       controller={true}
+      onViewStateChange={hideTooltip}
+      onClick={expandTooltip}
       getTooltip={(info) => {
         if (!info.object) return null;
 
