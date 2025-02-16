@@ -15,17 +15,36 @@ import {
 export type SnowDepth_BlockProperties = {
   stationName: string;
   totalSnowDepthChange: number | null;
+  maxWindGust: string;
+  curWindSpeed: string;
+  relativeHumidity: string;
+  windDirection: string;
+  airTempMax: string;
+  airTempMin: string;
+  precipAccumOneHour: string;
+  totalSnowDepth: string;
+  windSpeedAvg: string;
 };
 
+// export const snowDepth_COLOR_SCALE = scaleThreshold<number, Color>()
+//   .domain([0, 6, 12, 18, 24, 30])
+//   .range([
+//     [1, 152, 189],
+//     [73, 227, 206],
+//     [216, 254, 181],
+//     [254, 237, 177],
+//     [254, 173, 84],
+//     [209, 55, 78],
+//   ] as Color[]);
+
 export const snowDepth_COLOR_SCALE = scaleThreshold<number, Color>()
-  .domain([0, 6, 12, 18, 24, 30])
+  .domain([32, 33, 34, 35])
   .range([
-    [1, 152, 189],
-    [73, 227, 206],
-    [216, 254, 181],
-    [254, 237, 177],
-    [254, 173, 84],
-    [209, 55, 78],
+    [200, 220, 255], // Bluish white for coldest
+    [240, 240, 255], // Nearly white
+    [128, 0, 128], // Purple
+    [0, 100, 255], // Bright blue
+    [0, 50, 255], // Deeper blue for warmest
   ] as Color[]);
 
 export const snowDepth_INITIAL_VIEW_STATE: MapViewState = {

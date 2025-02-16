@@ -5,6 +5,8 @@ import { createRoot } from 'react-dom/client';
 import { Map } from 'react-map-gl/maplibre';
 import DeckGL from '@deck.gl/react';
 import { GeoJsonLayer, PolygonLayer } from '@deck.gl/layers';
+import { IconLayer } from '@deck.gl/layers';
+import type { PickingInfo } from '@deck.gl/core';
 
 import type { Feature, Geometry } from 'geojson';
 import { station_data } from './station_data';
@@ -17,6 +19,13 @@ import {
   snowDepth_getTooltip,
   SnowDepth_BlockProperties,
 } from './deckGL/snowDepthChange';
+
+type WeatherStation = {
+  name: string;
+  coordinates: [longitude: number, latitude: number];
+  windDirection: string;
+  windSpeed: string;
+};
 
 export default function App({
   data = snowDepth_weatherToGeoJSON(station_data),
@@ -50,13 +59,30 @@ export default function App({
       getElevation: (f) => {
         const baseHeight = f.properties.totalSnowDepthChange ?? 0;
         const finalHeight = baseHeight * elevScale;
-        console.log(`Station: ${f.properties.stationName}`);
-        console.log(
-          `Snow Change: ${f.properties.totalSnowDepthChange}`
-        );
-        console.log(`Base Height (before scale): ${baseHeight}`);
-        console.log(`Elevation Scale: ${elevScale}`);
-        console.log(`Final Height (after scale): ${finalHeight}`);
+        // console.log(`Station: ${f.properties.stationName}`);
+        // console.log(
+        //   `Snow Change: ${f.properties.totalSnowDepthChange}`
+        // );
+        // console.log(`Base Height (before scale): ${baseHeight}`);
+        // console.log(`Elevation Scale: ${elevScale}`);
+        // console.log(`Final Height (after scale): ${finalHeight}`);
+        // console.log(`Avg Wind Speed: ${f.properties.windSpeedAvg}`);
+        // console.log(`Wind Direction: ${f.properties.windDirection}`);
+        // console.log(`Max Wind Gust: ${f.properties.maxWindGust}`);
+        // console.log(`Cur Wind Speed: ${f.properties.curWindSpeed}`);
+        // console.log(
+        //   `Relative Humidity: ${f.properties.relativeHumidity}`
+        // );
+        // console.log(`Air Temp Max: ${f.properties.airTempMax}`);
+        // console.log(`Air Temp Min: ${f.properties.airTempMin}`);
+        // console.log(
+        //   `Precip Accum One Hour: ${f.properties.precipAccumOneHour}`
+        // );
+        // console.log(
+        //   `Total Snow Depth: ${f.properties.totalSnowDepth}`
+        // );
+        //console.log(`Total Snow Depth Change: ${f.properties.totalSnowDepthChange}`);
+
         console.log('-------------------');
         return baseHeight; // Layer will apply elevationScale automatically
       },
@@ -78,6 +104,33 @@ export default function App({
         elevationScale: 3000,
       },
     }),
+    new IconLayer<WeatherStation>({
+      id: 'weather-stations',
+      data: station_data.map((station) => ({
+        name: station.Station,
+        coordinates: [station.Longitude, station.Latitude],
+        windDirection: station.windDirection,
+        windSpeed: station.windSpeed,
+      })),
+      getIcon: (d) => {
+        const direction = d.windDirection.toLowerCase();
+        const speed = parseFloat(d.windSpeed.split(' ')[0]);
+
+        let strength = 'calm';
+        if (speed <= 0.6) strength = 'calm';
+        else if (speed <= 16.2) strength = 'light';
+        else if (speed <= 25.5) strength = 'moderate';
+        else if (speed <= 37.3) strength = 'strong';
+        else strength = 'extreme';
+
+        return `wind-direction-${direction}-${strength}`;
+      },
+      getPosition: (d) => d.coordinates,
+      getSize: 100,
+      iconAtlas: '/windAtlas/wind_arrows_location_icon_atlas.png',
+      iconMapping: '/windAtlas/location-icon-mapping.json',
+      pickable: true,
+    }),
   ];
 
   return (
@@ -86,9 +139,40 @@ export default function App({
       effects={effects}
       initialViewState={snowDepth_INITIAL_VIEW_STATE}
       controller={true}
-      getTooltip={snowDepth_getTooltip}
+      getTooltip={(info) => {
+        if (!info.object) return null;
+
+        try {
+          // Handle snow depth layer
+          if (
+            info.layer?.id === 'geojson' &&
+            info.object?.properties
+          ) {
+            return {
+              html: `
+                <div><b>Snow Depth Change</b></div>
+                <div>${info.object.properties.totalSnowDepthChange} in</div>
+                <div><b>Station Name</b></div>
+                <div>${info.object.properties.stationName}</div>
+              `,
+            };
+          }
+
+          // Handle weather station icons
+          if (info.layer?.id === 'weather-stations') {
+            return {
+              html: `<div>${info.object.name}</div>`,
+            };
+          }
+
+          return null;
+        } catch (error) {
+          console.error('Tooltip error:', error);
+          return null;
+        }
+      }}
     >
-      <Map reuseMaps mapStyle={mapStyle} />
+      <Map reuseMaps mapStyle={mapStyle} attributionControl={true} />
     </DeckGL>
   );
 }

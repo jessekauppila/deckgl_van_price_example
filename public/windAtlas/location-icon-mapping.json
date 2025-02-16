@@ -1,0 +1,642 @@
+{
+  "wind-direction-e-calm": {
+    "x": 0,
+    "y": 0,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-ese-calm": {
+    "x": 512,
+    "y": 0,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-se-calm": {
+    "x": 1024,
+    "y": 0,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-sse-calm": {
+    "x": 1536,
+    "y": 0,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-s-calm": {
+    "x": 2048,
+    "y": 0,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-ssw-calm": {
+    "x": 2560,
+    "y": 0,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-sw-calm": {
+    "x": 3072,
+    "y": 0,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-wsw-calm": {
+    "x": 3584,
+    "y": 0,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-w-calm": {
+    "x": 4096,
+    "y": 0,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-wnw-calm": {
+    "x": 4608,
+    "y": 0,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-nw-calm": {
+    "x": 5120,
+    "y": 0,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-nnw-calm": {
+    "x": 5632,
+    "y": 0,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-n-calm": {
+    "x": 6144,
+    "y": 0,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-nne-calm": {
+    "x": 6656,
+    "y": 0,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-ne-calm": {
+    "x": 7168,
+    "y": 0,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-ene-calm": {
+    "x": 7680,
+    "y": 0,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-e-light": {
+    "x": 0,
+    "y": 512,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-ese-light": {
+    "x": 512,
+    "y": 512,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-se-light": {
+    "x": 1024,
+    "y": 512,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-sse-light": {
+    "x": 1536,
+    "y": 512,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-s-light": {
+    "x": 2048,
+    "y": 512,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-ssw-light": {
+    "x": 2560,
+    "y": 512,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-sw-light": {
+    "x": 3072,
+    "y": 512,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-wsw-light": {
+    "x": 3584,
+    "y": 512,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-w-light": {
+    "x": 4096,
+    "y": 512,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-wnw-light": {
+    "x": 4608,
+    "y": 512,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-nw-light": {
+    "x": 5120,
+    "y": 512,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-nnw-light": {
+    "x": 5632,
+    "y": 512,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-n-light": {
+    "x": 6144,
+    "y": 512,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-nne-light": {
+    "x": 6656,
+    "y": 512,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-ne-light": {
+    "x": 7168,
+    "y": 512,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-ene-light": {
+    "x": 7680,
+    "y": 512,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-e-moderate": {
+    "x": 0,
+    "y": 1024,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-ese-moderate": {
+    "x": 512,
+    "y": 1024,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-se-moderate": {
+    "x": 1024,
+    "y": 1024,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-sse-moderate": {
+    "x": 1536,
+    "y": 1024,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-s-moderate": {
+    "x": 2048,
+    "y": 1024,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-ssw-moderate": {
+    "x": 2560,
+    "y": 1024,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-sw-moderate": {
+    "x": 3072,
+    "y": 1024,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-wsw-moderate": {
+    "x": 3584,
+    "y": 1024,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-w-moderate": {
+    "x": 4096,
+    "y": 1024,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-wnw-moderate": {
+    "x": 4608,
+    "y": 1024,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-nw-moderate": {
+    "x": 5120,
+    "y": 1024,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-nnw-moderate": {
+    "x": 5632,
+    "y": 1024,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-n-moderate": {
+    "x": 6144,
+    "y": 1024,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-nne-moderate": {
+    "x": 6656,
+    "y": 1024,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-ne-moderate": {
+    "x": 7168,
+    "y": 1024,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-ene-moderate": {
+    "x": 7680,
+    "y": 1024,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-e-strong": {
+    "x": 0,
+    "y": 1536,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-ese-strong": {
+    "x": 512,
+    "y": 1536,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-se-strong": {
+    "x": 1024,
+    "y": 1536,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-sse-strong": {
+    "x": 1536,
+    "y": 1536,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-s-strong": {
+    "x": 2048,
+    "y": 1536,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-ssw-strong": {
+    "x": 2560,
+    "y": 1536,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-sw-strong": {
+    "x": 3072,
+    "y": 1536,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-wsw-strong": {
+    "x": 3584,
+    "y": 1536,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-w-strong": {
+    "x": 4096,
+    "y": 1536,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-wnw-strong": {
+    "x": 4608,
+    "y": 1536,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-nw-strong": {
+    "x": 5120,
+    "y": 1536,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-nnw-strong": {
+    "x": 5632,
+    "y": 1536,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-n-strong": {
+    "x": 6144,
+    "y": 1536,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-nne-strong": {
+    "x": 6656,
+    "y": 1536,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-ne-strong": {
+    "x": 7168,
+    "y": 1536,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-ene-strong": {
+    "x": 7680,
+    "y": 1536,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-e-extreme": {
+    "x": 0,
+    "y": 2048,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-ese-extreme": {
+    "x": 512,
+    "y": 2048,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-se-extreme": {
+    "x": 1024,
+    "y": 2048,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-sse-extreme": {
+    "x": 1536,
+    "y": 2048,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-s-extreme": {
+    "x": 2048,
+    "y": 2048,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-ssw-extreme": {
+    "x": 2560,
+    "y": 2048,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-sw-extreme": {
+    "x": 3072,
+    "y": 2048,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-wsw-extreme": {
+    "x": 3584,
+    "y": 2048,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-w-extreme": {
+    "x": 4096,
+    "y": 2048,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-wnw-extreme": {
+    "x": 4608,
+    "y": 2048,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-nw-extreme": {
+    "x": 5120,
+    "y": 2048,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-nnw-extreme": {
+    "x": 5632,
+    "y": 2048,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-n-extreme": {
+    "x": 6144,
+    "y": 2048,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-nne-extreme": {
+    "x": 6656,
+    "y": 2048,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-ne-extreme": {
+    "x": 7168,
+    "y": 2048,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  },
+  "wind-direction-ene-extreme": {
+    "x": 7680,
+    "y": 2048,
+    "width": 512,
+    "height": 512,
+    "anchorX": 256,
+    "anchorY": 256
+  }
+}
