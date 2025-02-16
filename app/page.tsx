@@ -25,18 +25,21 @@ type WeatherStation = {
   coordinates: [longitude: number, latitude: number];
   windDirection: string;
   windSpeed: string;
+  windSpeedAvg: string;
 };
 
 export default function App({
   data = snowDepth_weatherToGeoJSON(station_data),
   mapStyle = snowDepth_MAP_STYLE,
 }: {
-  data?: string | Feature<Geometry, SnowDepth_BlockProperties>[];
+  data?: {
+    type: 'FeatureCollection';
+    features: Feature<Geometry, SnowDepth_BlockProperties>[];
+  };
   mapStyle?: string;
 }) {
+  console.log(data);
   const [effects] = useState(() => [snowDepth_lightingEffect]);
-
-  const elevScale = 5000;
 
   const snowDepth_layer = [
     // only needed when using shadows - a plane for shadows to drop on
@@ -49,7 +52,7 @@ export default function App({
     // }),
     new GeoJsonLayer<SnowDepth_BlockProperties>({
       id: 'geojson',
-      data,
+      data: data, // Pass the entire FeatureCollection, not just features
       opacity: 0.8,
       stroked: false,
       filled: true,
@@ -58,38 +61,18 @@ export default function App({
 
       getElevation: (f) => {
         const baseHeight = f.properties.totalSnowDepthChange ?? 0;
-        const finalHeight = baseHeight * elevScale;
-        // console.log(`Station: ${f.properties.stationName}`);
-        // console.log(
-        //   `Snow Change: ${f.properties.totalSnowDepthChange}`
-        // );
-        // console.log(`Base Height (before scale): ${baseHeight}`);
-        // console.log(`Elevation Scale: ${elevScale}`);
-        // console.log(`Final Height (after scale): ${finalHeight}`);
-        // console.log(`Avg Wind Speed: ${f.properties.windSpeedAvg}`);
-        // console.log(`Wind Direction: ${f.properties.windDirection}`);
-        // console.log(`Max Wind Gust: ${f.properties.maxWindGust}`);
-        // console.log(`Cur Wind Speed: ${f.properties.curWindSpeed}`);
-        // console.log(
-        //   `Relative Humidity: ${f.properties.relativeHumidity}`
-        // );
-        // console.log(`Air Temp Max: ${f.properties.airTempMax}`);
-        // console.log(`Air Temp Min: ${f.properties.airTempMin}`);
-        // console.log(
-        //   `Precip Accum One Hour: ${f.properties.precipAccumOneHour}`
-        // );
-        // console.log(
-        //   `Total Snow Depth: ${f.properties.totalSnowDepth}`
-        // );
-        //console.log(`Total Snow Depth Change: ${f.properties.totalSnowDepthChange}`);
-
+        //const finalHeight = baseHeight * elevScale;
+        console.log('baseHeight', baseHeight);
         console.log('-------------------');
         return baseHeight; // Layer will apply elevationScale automatically
       },
       elevationRange: [0, 15000],
-      elevationScale: elevScale,
-      getFillColor: (f) =>
-        snowDepth_COLOR_SCALE(f.properties.totalSnowDepthChange ?? 0),
+      elevationScale: 5000,
+      getFillColor: (f) => {
+        const maxTemp = f.properties.airTempMax;
+        console.log('maxTemp', maxTemp);
+        return snowDepth_COLOR_SCALE(maxTemp);
+      },
       getLineColor: [255, 255, 255],
       pickable: true,
       material: {
@@ -104,17 +87,18 @@ export default function App({
         elevationScale: 3000,
       },
     }),
-    new IconLayer<WeatherStation>({
+    new IconLayer({
       id: 'weather-stations',
-      data: station_data.map((station) => ({
-        name: station.Station,
-        coordinates: [station.Longitude, station.Latitude],
-        windDirection: station.windDirection,
-        windSpeed: station.windSpeed,
-      })),
-      getIcon: (d) => {
-        const direction = d.windDirection.toLowerCase();
-        const speed = parseFloat(d.windSpeed.split(' ')[0]);
+      data: data.features,
+      getIcon: (f) => {
+        if (!f?.properties?.windDirection) {
+          return 'default-icon';
+        }
+
+        const direction = f.properties.windDirection.toLowerCase();
+        const speed = f.properties.windSpeedAvg
+          ? parseFloat(f.properties.windSpeedAvg.split(' ')[0])
+          : 0;
 
         let strength = 'calm';
         if (speed <= 0.6) strength = 'calm';
@@ -125,8 +109,11 @@ export default function App({
 
         return `wind-direction-${direction}-${strength}`;
       },
-      getPosition: (d) => d.coordinates,
-      getSize: 100,
+      getPosition: (f) => [
+        f.properties.longitude,
+        f.properties.latitude,
+      ],
+      getSize: 40,
       iconAtlas: '/windAtlas/wind_arrows_location_icon_atlas.png',
       iconMapping: '/windAtlas/location-icon-mapping.json',
       pickable: true,

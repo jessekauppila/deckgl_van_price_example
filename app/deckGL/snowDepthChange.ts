@@ -38,13 +38,18 @@ export type SnowDepth_BlockProperties = {
 //   ] as Color[]);
 
 export const snowDepth_COLOR_SCALE = scaleThreshold<number, Color>()
-  .domain([32, 33, 34, 35])
+  .domain([0, 10, 20, 28, 31, 32, 33, 34, 35])
   .range([
-    [200, 220, 255], // Bluish white for coldest
-    [240, 240, 255], // Nearly white
-    [128, 0, 128], // Purple
-    [0, 100, 255], // Bright blue
-    [0, 50, 255], // Deeper blue for warmest
+    [150, 200, 255], // Deep blue-white (below 0°F)
+    [170, 210, 255], // Less deep blue-white (0-10°F)
+    [190, 220, 255], // Lighter blue-white (10-20°F)
+    [210, 230, 255], // Very light blue-white (20-28°F)
+    [230, 240, 255], // Nearly white (28-31°F)
+    [250, 250, 255], // Pure white (31-32°F)
+    [128, 0, 128], // Purple (32-33°F)
+    [180, 0, 90], // Purple-orange transition (33-34°F)
+    [255, 100, 0], // Bright orange (34-35°F)
+    [255, 50, 0], // Red-orange (above 35°F)
   ] as Color[]);
 
 export const snowDepth_INITIAL_VIEW_STATE: MapViewState = {
@@ -97,11 +102,20 @@ export function snowDepth_getTooltip({
   return (
     object && {
       html: `\
-   <div><b>Snow Depth Change</b></div>
-  <div>${object.properties.totalSnowDepthChange} in</div>
   <div><b>Station Name</b></div>
   <div>${object.properties.stationName}</div>
-
+  <div><b>Snow Depth</b></div>
+  <div>${object.properties.totalSnowDepth} in</div>
+  <div><b>Snow Depth Change</b></div>
+  <div>${object.properties.totalSnowDepthChange} in</div>
+  <div><b>1 Hour Precipitation</b></div>
+  <div>${object.properties.precipAccumOneHour}</div>
+  <div><b>Current Air Temperature</b></div>
+  <div>${object.properties.curAirTemp} °F</div>
+  <div><b>Current Wind Speed</b></div>
+  <div>${object.properties.curWindSpeed}</div>
+  <div><b>Wind Direction</b></div>
+  <div>${object.properties.windDirection}</div>
   `,
     }
   );
@@ -109,8 +123,10 @@ export function snowDepth_getTooltip({
 
 interface WeatherStation {
   Station: string;
-  Latitude: number;
-  Longitude: number;
+  Latitude: string;
+  Longitude: string;
+  Elevation: string;
+  Stid: string;
   'Total Snow Depth': string;
   'Total Snow Depth Change': string;
   '24h Snow Accumulation': string;
@@ -119,9 +135,9 @@ interface WeatherStation {
   'Max Wind Gust': string;
   'Wind Direction': string;
   'Wind Speed Avg': string;
-  Elevation: string;
   'Relative Humidity': string;
   'Api Fetch Time': string;
+  'Air Temp Max': string;
 }
 
 export function snowDepth_weatherToGeoJSON(
@@ -142,48 +158,32 @@ export function snowDepth_weatherToGeoJSON(
         coordinates: [
           [
             [
-              station.Longitude + 0.01 * Math.cos(0),
-              station.Latitude + 0.01 * Math.sin(0),
+              parseFloat(station['Longitude']),
+              parseFloat(station['Latitude']),
             ],
             [
-              station.Longitude + 0.01 * Math.cos(Math.PI / 4),
-              station.Latitude + 0.01 * Math.sin(Math.PI / 4),
+              parseFloat(station['Longitude']) + 0.01,
+              parseFloat(station['Latitude']),
             ],
             [
-              station.Longitude + 0.01 * Math.cos(Math.PI / 2),
-              station.Latitude + 0.01 * Math.sin(Math.PI / 2),
+              parseFloat(station['Longitude']) + 0.01,
+              parseFloat(station['Latitude']) + 0.01,
             ],
             [
-              station.Longitude + 0.01 * Math.cos((3 * Math.PI) / 4),
-              station.Latitude + 0.01 * Math.sin((3 * Math.PI) / 4),
+              parseFloat(station['Longitude']),
+              parseFloat(station['Latitude']) + 0.01,
             ],
             [
-              station.Longitude + 0.01 * Math.cos(Math.PI),
-              station.Latitude + 0.01 * Math.sin(Math.PI),
-            ],
-            [
-              station.Longitude + 0.01 * Math.cos((5 * Math.PI) / 4),
-              station.Latitude + 0.01 * Math.sin((5 * Math.PI) / 4),
-            ],
-            [
-              station.Longitude + 0.01 * Math.cos((3 * Math.PI) / 2),
-              station.Latitude + 0.01 * Math.sin((3 * Math.PI) / 2),
-            ],
-            [
-              station.Longitude + 0.01 * Math.cos((7 * Math.PI) / 4),
-              station.Latitude + 0.01 * Math.sin((7 * Math.PI) / 4),
-            ],
-            [
-              station.Longitude + 0.01 * Math.cos(0),
-              station.Latitude + 0.01 * Math.sin(0),
-            ],
+              parseFloat(station['Longitude']),
+              parseFloat(station['Latitude']),
+            ], // Close the polygon
           ],
         ],
       },
       properties: {
-        stationName: station.Station,
-        latitude: station.Latitude,
-        longitude: station.Longitude,
+        stationName: station['Station'],
+        latitude: parseFloat(station['Latitude']),
+        longitude: parseFloat(station['Longitude']),
         totalSnowDepth: parseValue(station['Total Snow Depth']),
         totalSnowDepthChange: parseValue(
           station['Total Snow Depth Change']
@@ -196,9 +196,10 @@ export function snowDepth_weatherToGeoJSON(
         maxWindGust: station['Max Wind Gust'],
         windDirection: station['Wind Direction'],
         windSpeedAvg: station['Wind Speed Avg'],
-        elevation: parseValue(station.Elevation),
+        elevation: parseValue(station['Elevation']),
         relativeHumidity: parseValue(station['Relative Humidity']),
         fetchTime: station['Api Fetch Time'],
+        airTempMax: parseValue(station['Air Temp Max']),
       },
     })),
   };
