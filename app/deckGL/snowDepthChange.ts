@@ -4,6 +4,7 @@ import type {
   PickingInfo,
   MapViewState,
 } from '@deck.gl/core';
+import type { TooltipProps } from '@deck.gl/core/typed';
 import type { Feature, Geometry } from 'geojson';
 import { scaleThreshold } from 'd3-scale';
 import {
@@ -96,29 +97,33 @@ export const snowDepth_landCover: Position[][] = [
   ],
 ];
 
-export function snowDepth_getTooltip({
-  object,
-}: PickingInfo<Feature<Geometry, SnowDepth_BlockProperties>>) {
-  return (
-    object && {
-      html: `\
-  <div><b>Station Name</b></div>
-  <div>${object.properties.stationName}</div>
-  <div><b>Snow Depth</b></div>
-  <div>${object.properties.totalSnowDepth} in</div>
-  <div><b>Snow Depth Change</b></div>
-  <div>${object.properties.totalSnowDepthChange} in</div>
-  <div><b>1 Hour Precipitation</b></div>
-  <div>${object.properties.precipAccumOneHour}</div>
-  <div><b>Current Air Temperature</b></div>
-  <div>${object.properties.curAirTemp} °F</div>
-  <div><b>Current Wind Speed</b></div>
-  <div>${object.properties.curWindSpeed}</div>
-  <div><b>Wind Direction</b></div>
-  <div>${object.properties.windDirection}</div>
-  `,
-    }
-  );
+export function snowDepth_getTooltip(
+  info: PickingInfo
+): TooltipProps {
+  const object = info.object as Feature<
+    Geometry,
+    SnowDepth_BlockProperties
+  >;
+  return object
+    ? {
+        html: `\
+      <div><b>Station Name</b></div>
+      <div>${object.properties.stationName}</div>
+      <div><b>Snow Depth</b></div>
+      <div>${object.properties.totalSnowDepth} in</div>
+      <div><b>Snow Depth Change</b></div>
+      <div>${object.properties.totalSnowDepthChange} in</div>
+      <div><b>1 Hour Precipitation</b></div>
+      <div>${object.properties.precipAccumOneHour}</div>
+      <div><b>Current Air Temperature</b></div>
+      <div>${object.properties.curAirTemp} °F</div>
+      <div><b>Current Wind Speed</b></div>
+      <div>${object.properties.curWindSpeed}</div>
+      <div><b>Wind Direction</b></div>
+      <div>${object.properties.windDirection}</div>
+    `,
+      }
+    : null;
 }
 
 interface WeatherStation {

@@ -1,14 +1,26 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Map } from 'react-map-gl/maplibre';
-import DeckGL from '@deck.gl/react';
-import { GeoJsonLayer, PolygonLayer } from '@deck.gl/layers';
-import { IconLayer } from '@deck.gl/layers';
-import type { PickingInfo } from '@deck.gl/core';
+//import { Map } from 'react-map-gl/maplibre';
+import { Map } from 'react-map-gl';
 
-import type { Feature, Geometry } from 'geojson';
+import DeckGL from '@deck.gl/react';
+import {
+  IconLayer,
+  GeoJsonLayer,
+  TextLayerPolygonLayer,
+} from '@deck.gl/layers';
+import { _TerrainExtension as TerrainExtension } from '@deck.gl/extensions';
+import type { TerrainLayerProps } from '@deck.gl/geo-layers';
+import type { Color, MapViewState, PickingInfo } from '@deck.gl/core';
+
+import type {
+  FeatureCollection,
+  Feature,
+  LineString,
+  Geometry,
+} from 'geojson';
 import { station_data } from './station_data';
 import {
   snowDepth_COLOR_SCALE,
