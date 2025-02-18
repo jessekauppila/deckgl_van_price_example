@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 //import { Map } from 'react-map-gl/maplibre';
 import { Map } from 'react-map-gl';
+import { TerrainLayer } from '@deck.gl/geo-layers';
 
 import DeckGL from '@deck.gl/react';
 import {
@@ -32,6 +33,21 @@ import {
   SnowDepth_BlockProperties,
 } from './deckGL/snowDepthChange';
 
+//////////////////////
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN; // eslint-disable-line
+const TERRAIN_IMAGE = `https://api.mapbox.com/v4/mapbox.terrain-rgb/{z}/{x}/{y}.png?access_token=${MAPBOX_TOKEN}`;
+const SURFACE_IMAGE = `https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}@2x.png?access_token=${MAPBOX_TOKEN}`;
+
+// https://docs.mapbox.com/help/troubleshooting/access-elevation-data/#mapbox-terrain-rgb
+// Note - the elevation rendered by this example is greatly exagerated!
+const ELEVATION_DECODER: TerrainLayerProps['elevationDecoder'] = {
+  rScaler: 6553.6,
+  gScaler: 25.6,
+  bScaler: 0.1,
+  offset: -10000,
+};
+//////////////////////
+
 type WeatherStation = {
   name: string;
   coordinates: [longitude: number, latitude: number];
@@ -53,7 +69,7 @@ export default function App({
   console.log(data);
   const [effects] = useState(() => [snowDepth_lightingEffect]);
 
-  const snowDepth_layer = [
+  const layers = [
     // only needed when using shadows - a plane for shadows to drop on
     // new PolygonLayer<Position[]>({
     //   id: 'ground',
@@ -74,15 +90,12 @@ export default function App({
       getElevation: (f) => {
         const baseHeight = f.properties.totalSnowDepthChange ?? 0;
         //const finalHeight = baseHeight * elevScale;
-        console.log('baseHeight', baseHeight);
-        console.log('-------------------');
         return baseHeight; // Layer will apply elevationScale automatically
       },
       elevationRange: [0, 15000],
       elevationScale: 5000,
       getFillColor: (f) => {
         const maxTemp = f.properties.airTempMax;
-        console.log('maxTemp', maxTemp);
         return snowDepth_COLOR_SCALE(maxTemp);
       },
       getLineColor: [255, 255, 255],
@@ -130,11 +143,23 @@ export default function App({
       iconMapping: '/windAtlas/location-icon-mapping.json',
       pickable: true,
     }),
+
+    // new TerrainLayer({
+    //   id: 'terrain',
+    //   minZoom: 0,
+    //   strategy: 'no-overlap',
+    //   elevationDecoder: ELEVATION_DECODER,
+    //   elevationData: TERRAIN_IMAGE,
+    //   texture: SURFACE_IMAGE,
+    //   wireframe: false,
+    //   color: [255, 255, 255],
+    //   operation: 'terrain+draw',
+    // }),
   ];
 
   return (
     <DeckGL
-      layers={snowDepth_layer}
+      layers={layers}
       effects={effects}
       initialViewState={snowDepth_INITIAL_VIEW_STATE}
       controller={true}
@@ -171,7 +196,14 @@ export default function App({
         }
       }}
     >
-      <Map reuseMaps mapStyle={mapStyle} attributionControl={true} />
+      {/* <Map reuseMaps mapStyle={mapStyle} attributionControl={true} /> */}
+      <Map
+        reuseMaps
+        mapStyle="mapbox://styles/mapbox/dark-v11"
+        mapboxAccessToken={
+          process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
+        }
+      />
     </DeckGL>
   );
 }
