@@ -11,6 +11,7 @@ import {
   LightingEffect,
   AmbientLight,
   PointLight,
+  _SunLight as SunLight,
 } from '@deck.gl/core';
 
 export type SnowDepth_BlockProperties = {
@@ -26,17 +27,6 @@ export type SnowDepth_BlockProperties = {
   totalSnowDepth: string;
   windSpeedAvg: string;
 };
-
-// export const snowDepth_COLOR_SCALE = scaleThreshold<number, Color>()
-//   .domain([0, 6, 12, 18, 24, 30])
-//   .range([
-//     [1, 152, 189],
-//     [73, 227, 206],
-//     [216, 254, 181],
-//     [254, 237, 177],
-//     [254, 173, 84],
-//     [209, 55, 78],
-//   ] as Color[]);
 
 export const snowDepth_COLOR_SCALE = scaleThreshold<number, Color>()
   .domain([0, 10, 20, 28, 31, 32, 33, 34, 35])
@@ -63,43 +53,45 @@ export const snowDepth_INITIAL_VIEW_STATE: MapViewState = {
 };
 
 export const snowDepth_MAP_STYLE =
+  //dark
   'https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json';
+//light
+//'https://basemaps.cartocdn.com/gl/positron-nolabels-gl-style/style.json';
 
 const ambientLight = new AmbientLight({
   color: [255, 255, 255],
   intensity: 1.0,
 });
 
-const pointLight1 = new PointLight({
+const dirLight = new SunLight({
+  timestamp: Date.UTC(2019, 7, 1, 22),
   color: [255, 255, 255],
-  intensity: 0.8,
-  position: [-118.3302, 46.0646, 80000],
-});
-
-const pointLight2 = new PointLight({
-  color: [255, 255, 255],
-  intensity: 0.3,
-  position: [-123.8313, 46.1879, 50000],
+  intensity: 0.1, // Increase light brightness
+  _shadow: true,
 });
 
 export const snowDepth_lightingEffect = new LightingEffect({
   ambientLight,
-  pointLight1,
-  pointLight2,
+  dirLight,
 });
 
+// Set shadow color
+snowDepth_lightingEffect.shadowColor = [0, 0, 0, 0.1];
+
+// set plane for shadow
 export const snowDepth_landCover: Position[][] = [
   [
-    [-123.0, 49.196],
-    [-123.0, 49.324],
-    [-123.306, 49.324],
-    [-123.306, 49.196],
+    [-125.0, 42.0], // Southwest (Southern Oregon)
+    [-125.0, 55.0], // Northwest (Northern BC)
+    [-115.0, 55.0], // Northeast (Northern BC)
+    [-115.0, 42.0], // Southeast (Southern Oregon)
+    [-125.0, 42.0], // Close the polygon
   ],
 ];
 
 export function snowDepth_getTooltip(
   info: PickingInfo
-): TooltipProps {
+): TooltipContent {
   const object = info.object as Feature<
     Geometry,
     SnowDepth_BlockProperties
@@ -154,36 +146,36 @@ export function snowDepth_weatherToGeoJSON(
     return isNaN(num) ? null : num;
   };
 
+  // Function to create a circular polygon
+  const createCircle = (
+    longitude: number,
+    latitude: number,
+    radius: number,
+    numPoints: number = 32
+  ) => {
+    const coordinates = [];
+    for (let i = 0; i < numPoints; i++) {
+      const angle = (i / numPoints) * 2 * Math.PI; // Distribute points evenly
+      const dx = radius * Math.cos(angle);
+      const dy = radius * Math.sin(angle);
+      coordinates.push([longitude + dx, latitude + dy]);
+    }
+    coordinates.push(coordinates[0]); // Close the polygon
+    return [coordinates]; // GeoJSON expects an array of rings
+  };
+
   return {
     type: 'FeatureCollection' as const,
     features: weatherData.map((station) => ({
       type: 'Feature' as const,
       geometry: {
         type: 'Polygon' as const,
-        coordinates: [
-          [
-            [
-              parseFloat(station['Longitude']),
-              parseFloat(station['Latitude']),
-            ],
-            [
-              parseFloat(station['Longitude']) + 0.01,
-              parseFloat(station['Latitude']),
-            ],
-            [
-              parseFloat(station['Longitude']) + 0.01,
-              parseFloat(station['Latitude']) + 0.01,
-            ],
-            [
-              parseFloat(station['Longitude']),
-              parseFloat(station['Latitude']) + 0.01,
-            ],
-            [
-              parseFloat(station['Longitude']),
-              parseFloat(station['Latitude']),
-            ], // Close the polygon
-          ],
-        ],
+        coordinates: createCircle(
+          parseFloat(station['Longitude']),
+          parseFloat(station['Latitude']),
+          0.03, // Adjust radius as needed
+          8 // Adjust number of points as needed
+        ),
       },
       properties: {
         stationName: station['Station'],
