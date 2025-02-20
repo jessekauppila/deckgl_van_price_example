@@ -44,6 +44,8 @@ import {
 
 interface MyWidgetProps {
   element: HTMLDivElement;
+  toggleLayer: (id: string) => void;
+  layersState: Record<string, boolean>;
 }
 
 class MyWidget implements Widget {
@@ -64,10 +66,70 @@ class MyWidget implements Widget {
   }
 }
 
-const MyReactWidget: React.FC<Record<string, never>> = (props) => {
+const MyReactWidget: React.FC<{
+  toggleLayer: (id: string) => void;
+  layersState: Record<string, boolean>;
+}> = ({ toggleLayer, layersState }) => {
   const element = useMemo(() => document.createElement('div'), []);
-  const _widget = useWidget(MyWidget, { ...props, element });
-  return createPortal(<div>Hello World</div>, element);
+  const _widget = useWidget(MyWidget, {
+    element,
+    toggleLayer,
+    layersState,
+  });
+
+  return createPortal(
+    <div
+      style={{
+        position: 'absolute',
+        top: 10,
+        left: 10,
+        background: 'white',
+        padding: '10px',
+        borderRadius: '5px',
+        boxShadow: '0px 4px 6px rgba(0,0,0,0.1)',
+        pointerEvents: 'auto',
+        zIndex: 1,
+      }}
+    >
+      <h4>Toggle Layers</h4>
+      <label>
+        <input
+          type="checkbox"
+          checked={layersState.forecastZones}
+          onChange={() => toggleLayer('forecastZones')}
+        />
+        Forecast Zones
+      </label>
+      <br />
+      <label>
+        <input
+          type="checkbox"
+          checked={layersState.ground}
+          onChange={() => toggleLayer('ground')}
+        />
+        Ground
+      </label>
+      <br />
+      <label>
+        <input
+          type="checkbox"
+          checked={layersState.weatherStations}
+          onChange={() => toggleLayer('weatherStations')}
+        />
+        Weather Stations
+      </label>
+      <br />
+      <label>
+        <input
+          type="checkbox"
+          checked={layersState.geojson}
+          onChange={() => toggleLayer('geojson')}
+        />
+        Snow Depth
+      </label>
+    </div>,
+    element
+  );
 };
 
 //////////////////////
@@ -121,121 +183,137 @@ export default function App({
   console.log(data);
   const [effects] = useState(() => [snowDepth_lightingEffect]);
 
+  // Store layer visibility in state
+  const [layersState, setLayersState] = useState({
+    forecastZones: true,
+    ground: true,
+    weatherStations: true,
+    geojson: false,
+  });
+
+  // Function to toggle a layer's visibility
+  const toggleLayer = (id: string) => {
+    setLayersState((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
   const layers = [
     // only needed when using shadows - a plane for shadows to drop on
+    layersState.forecastZones &&
+      new PolygonLayer<ForecastZones>({
+        id: 'forecast-zones',
+        data: forecastZonesData.forecastZones,
+        stroked: true,
+        filled: false,
+        getPolygon: (d) => d.contour,
+        getLineColor: [100, 0, 100, 200], // Light purple, more opaque
+        getLineWidth: 2000,
+        pickable: true,
+      }),
 
-    new PolygonLayer<ForecastZones>({
-      id: 'forecast-zones',
-      data: forecastZonesData.forecastZones,
-      stroked: true,
-      filled: false,
-      getPolygon: (d) => d.contour,
-      getLineColor: [100, 0, 100, 200], // Light purple, more opaque
-      getLineWidth: 2000,
-      pickable: true,
-    }),
+    layersState.ground &&
+      new PolygonLayer<Position[]>({
+        id: 'ground',
+        data: landCover,
+        stroked: false,
+        filled: true,
+        getPolygon: (f) => f,
+        getFillColor: [0, 0, 0, 0], // Just transparent, no white or opacity setting
+      }),
 
-    new PolygonLayer<Position[]>({
-      id: 'ground',
-      data: landCover,
-      stroked: false,
-      filled: true,
-      getPolygon: (f) => f,
-      getFillColor: [0, 0, 0, 0], // Just transparent, no white or opacity setting
-    }),
+    layersState.weatherStations &&
+      new IconLayer({
+        id: 'weather-stations',
+        data: data.features,
+        billboard: false,
+        autoHighlight: true,
+        getIcon: (f) => {
+          if (!f?.properties?.windDirection) {
+            return 'default-icon';
+          }
 
-    new IconLayer({
-      id: 'weather-stations',
-      data: data.features,
-      billboard: false,
-      autoHighlight: true,
-      getIcon: (f) => {
-        if (!f?.properties?.windDirection) {
-          return 'default-icon';
-        }
+          const direction = f.properties.windDirection.toLowerCase();
+          const speed = f.properties.windSpeedAvg
+            ? parseFloat(f.properties.windSpeedAvg.split(' ')[0])
+            : 0;
 
-        const direction = f.properties.windDirection.toLowerCase();
-        const speed = f.properties.windSpeedAvg
-          ? parseFloat(f.properties.windSpeedAvg.split(' ')[0])
-          : 0;
+          let strength = 'calm';
+          if (speed <= 0.6) strength = 'calm';
+          else if (speed <= 16.2) strength = 'light';
+          else if (speed <= 25.5) strength = 'moderate';
+          else if (speed <= 37.3) strength = 'strong';
+          else strength = 'extreme';
 
-        let strength = 'calm';
-        if (speed <= 0.6) strength = 'calm';
-        else if (speed <= 16.2) strength = 'light';
-        else if (speed <= 25.5) strength = 'moderate';
-        else if (speed <= 37.3) strength = 'strong';
-        else strength = 'extreme';
-
-        return `wind-direction-${direction}-${strength}`;
-      },
-      tintColor: (f) => {
-        const speed = parseFloat(
-          f.properties.windSpeedAvg?.split(' ')[0] || '0'
-        );
-
-        if (speed <= 0.6)
-          return [255, 255, 255, 255]; // White for calm
-        else if (speed <= 16.2)
-          return [255, 255, 180, 255]; // Pastel yellow for light
-        else if (speed <= 25.5) return [255, 218, 185, 255];
-        // Pastel orange/peach for moderate
-        else if (speed <= 37.3)
-          return [255, 182, 193, 255]; // Pastel red/pink for strong
-        else return [220, 20, 60, 255]; // Deeper red for extreme
-      },
-      getPosition: (f) => [
-        f.properties.longitude,
-        f.properties.latitude,
-      ],
-      getSize: 100,
-      getAngle: 0,
-      angleAlignment: 'map',
-      iconAtlas: '/windAtlas/wind_arrows_location_icon_atlas.png',
-      iconMapping: '/windAtlas/location-icon-mapping.json',
-      pickable: true,
-      shadowEnabled: false,
-      alphaCutoff: 0.05,
-      sizeScale: 1,
-    }),
-
-    new GeoJsonLayer<SnowDepth_BlockProperties>({
-      id: 'geojson',
-      data: data,
-      opacity: 0.8,
-      stroked: false,
-      filled: true,
-      extruded: true,
-      wireframe: true,
-      getElevation: (f) => {
-        const baseHeight = f.properties.totalSnowDepthChange ?? 0;
-        //const finalHeight = baseHeight * elevScale;
-        return baseHeight; // Layer will apply elevationScale automatically
-      },
-      elevationRange: [0, 15000],
-      elevationScale: 2500,
-      getFillColor: (f) => {
-        const maxTemp = f.properties.airTempMax;
-        return snowDepth_COLOR_SCALE(maxTemp);
-      },
-      getLineColor: (f) => {
-        const maxTemp = f.properties.airTempMax;
-        return snowDepth_COLOR_SCALE(maxTemp);
-      },
-      pickable: true,
-      shadowEnabled: true,
-      material: {
-        ambient: 0.64,
-        diffuse: 0.6,
-        shininess: 32,
-        specularColor: [51, 51, 51],
-      },
-      transitions: {
-        geometry: {
-          duration: 3000,
-          type: 'spring',
+          return `wind-direction-${direction}-${strength}`;
         },
-      },
-    }),
+        tintColor: (f) => {
+          const speed = parseFloat(
+            f.properties.windSpeedAvg?.split(' ')[0] || '0'
+          );
+
+          if (speed <= 0.6)
+            return [255, 255, 255, 255]; // White for calm
+          else if (speed <= 16.2)
+            return [255, 255, 180, 255]; // Pastel yellow for light
+          else if (speed <= 25.5) return [255, 218, 185, 255];
+          // Pastel orange/peach for moderate
+          else if (speed <= 37.3)
+            return [255, 182, 193, 255]; // Pastel red/pink for strong
+          else return [220, 20, 60, 255]; // Deeper red for extreme
+        },
+        getPosition: (f) => [
+          f.properties.longitude,
+          f.properties.latitude,
+        ],
+        getSize: 100,
+        getAngle: 0,
+        angleAlignment: 'map',
+        iconAtlas: '/windAtlas/wind_arrows_location_icon_atlas.png',
+        iconMapping: '/windAtlas/location-icon-mapping.json',
+        pickable: true,
+        shadowEnabled: false,
+        alphaCutoff: 0.05,
+        sizeScale: 1,
+      }),
+
+    layersState.geojson &&
+      new GeoJsonLayer<SnowDepth_BlockProperties>({
+        id: 'geojson',
+        data: data,
+        opacity: 0.8,
+        stroked: false,
+        filled: true,
+        extruded: true,
+        wireframe: true,
+        getElevation: (f) => {
+          const baseHeight = f.properties.totalSnowDepthChange ?? 0;
+          //const finalHeight = baseHeight * elevScale;
+          return baseHeight; // Layer will apply elevationScale automatically
+        },
+        elevationRange: [0, 15000],
+        elevationScale: 2500,
+        getFillColor: (f) => {
+          const maxTemp = f.properties.airTempMax;
+          return snowDepth_COLOR_SCALE(maxTemp);
+        },
+        getLineColor: (f) => {
+          const maxTemp = f.properties.airTempMax;
+          return snowDepth_COLOR_SCALE(maxTemp);
+        },
+        pickable: true,
+        shadowEnabled: true,
+        material: {
+          ambient: 0.64,
+          diffuse: 0.6,
+          shininess: 32,
+          specularColor: [51, 51, 51],
+        },
+        transitions: {
+          geometry: {
+            duration: 3000,
+            type: 'spring',
+          },
+        },
+      }),
 
     //extensions: [new TerrainExtension()],
 
@@ -284,23 +362,17 @@ export default function App({
         }
       }}
     >
-      {/* <Map
-        reuseMaps
-        mapStyle={mapStyle}
-        attributionControl={true}
-        mapboxAccessToken={
-          process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
-        }
-      /> */}
       <Map
         reuseMaps
         mapStyle={snowDepth_MAP_STYLE}
-        //"mapbox://styles/mapbox/dark-v11" for use with terrain!
         mapboxAccessToken={
           process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
         }
       />
-      <MyReactWidget />
+      <MyReactWidget
+        toggleLayer={toggleLayer}
+        layersState={layersState}
+      />
     </DeckGL>
   );
 }
