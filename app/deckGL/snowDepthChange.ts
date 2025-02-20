@@ -4,7 +4,10 @@ import type {
   PickingInfo,
   MapViewState,
 } from '@deck.gl/core';
-import type { TooltipProps } from '@deck.gl/core/typed';
+import type {
+  TooltipProps,
+  TooltipContent,
+} from '@deck.gl/core/typed';
 import type { Feature, Geometry } from 'geojson';
 import { scaleThreshold } from 'd3-scale';
 import {
@@ -29,18 +32,11 @@ export type SnowDepth_BlockProperties = {
 };
 
 export const snowDepth_COLOR_SCALE = scaleThreshold<number, Color>()
-  .domain([0, 10, 20, 28, 31, 32, 33, 34, 35])
+  .domain([31, 34])
   .range([
-    [150, 200, 255], // Deep blue-white (below 0°F)
-    [170, 210, 255], // Less deep blue-white (0-10°F)
-    [190, 220, 255], // Lighter blue-white (10-20°F)
-    [210, 230, 255], // Very light blue-white (20-28°F)
-    [230, 240, 255], // Nearly white (28-31°F)
-    [250, 250, 255], // Pure white (31-32°F)
-    [128, 0, 128], // Purple (32-33°F)
-    [180, 0, 90], // Purple-orange transition (33-34°F)
-    [255, 100, 0], // Bright orange (34-35°F)
-    [255, 50, 0], // Red-orange (above 35°F)
+    [255, 255, 255], // Pure white (below 31°F)
+    [135, 206, 235], // Pastel blue (31-34°F)
+    [150, 255, 150], // Pale green (above 34°F)
   ] as Color[]);
 
 export const snowDepth_INITIAL_VIEW_STATE: MapViewState = {
@@ -54,9 +50,11 @@ export const snowDepth_INITIAL_VIEW_STATE: MapViewState = {
 
 export const snowDepth_MAP_STYLE =
   //dark
-  'https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json';
-//light
-//'https://basemaps.cartocdn.com/gl/positron-nolabels-gl-style/style.json';
+  //'https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json';
+  //light
+  //'https://basemaps.cartocdn.com/gl/positron-nolabels-gl-style/style.json';
+  //for use with
+  'mapbox://styles/mapbox/dark-v11'; //for use with terrain!
 
 const ambientLight = new AmbientLight({
   color: [255, 255, 255],
@@ -66,7 +64,7 @@ const ambientLight = new AmbientLight({
 const dirLight = new SunLight({
   timestamp: Date.UTC(2019, 7, 1, 22),
   color: [255, 255, 255],
-  intensity: 0.1, // Increase light brightness
+  intensity: 1.0, // Increase light brightness
   _shadow: true,
 });
 
@@ -76,7 +74,7 @@ export const snowDepth_lightingEffect = new LightingEffect({
 });
 
 // Set shadow color
-snowDepth_lightingEffect.shadowColor = [0, 0, 0, 0.1];
+snowDepth_lightingEffect.shadowColor = [0, 0, 0, 0.3];
 
 // set plane for shadow
 export const snowDepth_landCover: Position[][] = [
@@ -99,8 +97,8 @@ export function snowDepth_getTooltip(
   return object
     ? {
         html: `\
-      <div><b>Station Name</b></div>
-      <div>${object.properties.stationName}</div>
+      <div><b>${object.properties.stationName}</b></div>
+
       <div><b>Snow Depth</b></div>
       <div>${object.properties.totalSnowDepth} in</div>
       <div><b>Snow Depth Change</b></div>

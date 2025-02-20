@@ -66,11 +66,11 @@ type WeatherStation = {
 
 const landCover: Position[][] = [
   [
-    [-124.848974, 45.543541], // Southwest corner WASHINGTON
-    [-124.848974, 49.002494], // Northwest corner
-    [-116.916071, 49.002494], // Northeast corner
-    [-116.916071, 45.543541], // Southeast corner
-    [-124.848974, 45.543541], // Close the polygon by repeating first point
+    [-139.848974, 30.543541], // Southwest corner (1000 miles SW)
+    [-139.848974, 64.002494], // Northwest corner (1000 miles NW)
+    [-101.916071, 64.002494], // Northeast corner (1000 miles NE)
+    [-101.916071, 30.543541], // Southeast corner (1000 miles SE)
+    [-139.848974, 30.543541], // Close the polygon by repeating first point
   ],
 ];
 
@@ -81,7 +81,6 @@ type ForecastZones = {
 
 export default function App({
   data = snowDepth_weatherToGeoJSON(station_data),
-  mapStyle = snowDepth_MAP_STYLE,
 }: {
   data?: {
     type: 'FeatureCollection';
@@ -89,14 +88,37 @@ export default function App({
   };
   mapStyle?: string;
 }) {
+  console.log(data);
   const [effects] = useState(() => [snowDepth_lightingEffect]);
 
   const layers = [
     // only needed when using shadows - a plane for shadows to drop on
 
+    new PolygonLayer<ForecastZones>({
+      id: 'forecast-zones',
+      data: forecastZonesData.forecastZones,
+      stroked: true,
+      filled: false,
+      getPolygon: (d) => d.contour,
+      getLineColor: [100, 0, 100, 200], // Light purple, more opaque
+      getLineWidth: 2000,
+      pickable: true,
+    }),
+
+    new PolygonLayer<Position[]>({
+      id: 'ground',
+      data: landCover,
+      stroked: false,
+      filled: true,
+      getPolygon: (f) => f,
+      getFillColor: [0, 0, 0, 0], // Just transparent, no white or opacity setting
+    }),
+
     new IconLayer({
       id: 'weather-stations',
       data: data.features,
+      billboard: false,
+      autoHighlight: true,
       getIcon: (f) => {
         if (!f?.properties?.windDirection) {
           return 'default-icon';
@@ -116,71 +138,73 @@ export default function App({
 
         return `wind-direction-${direction}-${strength}`;
       },
+      tintColor: (f) => {
+        const speed = parseFloat(
+          f.properties.windSpeedAvg?.split(' ')[0] || '0'
+        );
+
+        if (speed <= 0.6)
+          return [255, 255, 255, 255]; // White for calm
+        else if (speed <= 16.2)
+          return [255, 255, 180, 255]; // Pastel yellow for light
+        else if (speed <= 25.5) return [255, 218, 185, 255];
+        // Pastel orange/peach for moderate
+        else if (speed <= 37.3)
+          return [255, 182, 193, 255]; // Pastel red/pink for strong
+        else return [220, 20, 60, 255]; // Deeper red for extreme
+      },
       getPosition: (f) => [
         f.properties.longitude,
         f.properties.latitude,
       ],
       getSize: 100,
+      getAngle: 0,
+      angleAlignment: 'map',
       iconAtlas: '/windAtlas/wind_arrows_location_icon_atlas.png',
       iconMapping: '/windAtlas/location-icon-mapping.json',
       pickable: true,
-      shadowEnabled: false, // Prevents shadows from affecting this layer
-    }),
-
-    new PolygonLayer<Position[]>({
-      id: 'ground',
-      data: landCover,
-      stroked: false,
-      getPolygon: (f) => f,
-      getFillColor: [0, 0, 0, 0],
+      shadowEnabled: false,
+      alphaCutoff: 0.05,
+      sizeScale: 1,
     }),
 
     new GeoJsonLayer<SnowDepth_BlockProperties>({
       id: 'geojson',
-      data: data, // Pass the entire FeatureCollection, not just features
+      data: data,
       opacity: 0.8,
       stroked: false,
       filled: true,
       extruded: true,
       wireframe: true,
-
       getElevation: (f) => {
         const baseHeight = f.properties.totalSnowDepthChange ?? 0;
         //const finalHeight = baseHeight * elevScale;
         return baseHeight; // Layer will apply elevationScale automatically
       },
       elevationRange: [0, 15000],
-      elevationScale: 5000,
+      elevationScale: 2500,
       getFillColor: (f) => {
         const maxTemp = f.properties.airTempMax;
         return snowDepth_COLOR_SCALE(maxTemp);
       },
-      getLineColor: [255, 255, 255],
+      getLineColor: (f) => {
+        const maxTemp = f.properties.airTempMax;
+        return snowDepth_COLOR_SCALE(maxTemp);
+      },
       pickable: true,
-      shadowEnabled: true, // <--- Make sure this is set
+      shadowEnabled: true,
       material: {
         ambient: 0.64,
         diffuse: 0.6,
         shininess: 32,
         specularColor: [51, 51, 51],
       },
-
-      //coverage: 1,
       transitions: {
-        elevationScale: 3000,
+        geometry: {
+          duration: 3000,
+          type: 'spring',
+        },
       },
-    }),
-
-    new PolygonLayer<ForecastZones>({
-      id: 'forecast-zones',
-      data: forecastZonesData.forecastZones,
-      stroked: true,
-      filled: true,
-      getPolygon: (d) => d.contour, // use contour instead of coordinates[0]
-      getFillColor: [0, 0, 0, 0],
-      getLineColor: [0, 0, 139, 100],
-      getLineWidth: 1000,
-      pickable: true,
     }),
 
     //extensions: [new TerrainExtension()],
@@ -213,14 +237,7 @@ export default function App({
             info.layer?.id === 'geojson' &&
             info.object?.properties
           ) {
-            return {
-              html: `
-                <div><b>Snow Depth Change</b></div>
-                <div>${info.object.properties.totalSnowDepthChange} in</div>
-                <div><b>Station Name</b></div>
-                <div>${info.object.properties.stationName}</div>
-              `,
-            };
+            return snowDepth_getTooltip(info);
           }
 
           // Handle weather station icons
@@ -247,7 +264,8 @@ export default function App({
       /> */}
       <Map
         reuseMaps
-        mapStyle="mapbox://styles/mapbox/dark-v11"
+        mapStyle={snowDepth_MAP_STYLE}
+        //"mapbox://styles/mapbox/dark-v11" for use with terrain!
         mapboxAccessToken={
           process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
         }
