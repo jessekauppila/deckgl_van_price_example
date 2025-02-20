@@ -32,13 +32,11 @@ export type SnowDepth_BlockProperties = {
 };
 
 export const snowDepth_COLOR_SCALE = scaleThreshold<number, Color>()
-  .domain([30, 32, 34, 36])
+  .domain([31, 34])
   .range([
-    [255, 255, 255], // White (below 30°F)
-    [230, 240, 255], // Light blue white (30-32°F)
-    [0, 0, 255], // Blue (32-34°F)
-    [0, 150, 200], // Greenish blue (34-36°F)
-    [0, 255, 0], // Green (above 36°F)
+    [255, 255, 255], // White (below 31°F)
+    [30, 144, 255], // DodgerBlue (31-34°F)
+    [150, 255, 150], // Pastel green (above 34°F)
   ] as Color[]);
 
 export const snowDepth_INITIAL_VIEW_STATE: MapViewState = {
