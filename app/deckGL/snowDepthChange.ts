@@ -32,11 +32,13 @@ export type SnowDepth_BlockProperties = {
 };
 
 export const snowDepth_COLOR_SCALE = scaleThreshold<number, Color>()
-  .domain([31, 34])
+  .domain([30, 32, 34, 36])
   .range([
-    [255, 255, 255], // Pure white (below 31°F)
-    [135, 206, 235], // Pastel blue (31-34°F)
-    [150, 255, 150], // Pale green (above 34°F)
+    [255, 255, 255], // White (below 30°F)
+    [230, 240, 255], // Light blue white (30-32°F)
+    [0, 0, 255], // Blue (32-34°F)
+    [0, 150, 200], // Greenish blue (34-36°F)
+    [0, 255, 0], // Green (above 36°F)
   ] as Color[]);
 
 export const snowDepth_INITIAL_VIEW_STATE: MapViewState = {
@@ -94,22 +96,65 @@ export function snowDepth_getTooltip(
     Geometry,
     SnowDepth_BlockProperties
   >;
+
+  const getWindStrengthColor = (speed: number) => {
+    if (speed <= 0.6) return 'rgb(255, 255, 255)';
+    else if (speed <= 16.2) return 'rgb(255, 255, 180)';
+    else if (speed <= 25.5) return 'rgb(255, 218, 185)';
+    else if (speed <= 37.3) return 'rgb(255, 182, 193)';
+    else return 'rgb(220, 20, 60)';
+  };
+
+  const getTempConditionColor = (temp: number) => {
+    if (temp <= 31) return 'rgb(255, 255, 255)';
+    else if (temp <= 34) return 'rgb(135, 206, 235)';
+    else return 'rgb(150, 255, 150)';
+  };
+
+  const getTempConditionWithRange = (temp: number) => {
+    if (temp <= 31) return '<b>Snow</b> (< 31°F)';
+    else if (temp <= 34)
+      return '<b>Mixed Precipitation</b> (31-34°F)';
+    else return '<b>Rain</b> (> 34°F)';
+  };
+
+  const getWindStrengthWithRange = (speed: number) => {
+    if (speed <= 0.6) return '"<b>Calm</b> (≤ 0.6 mph)"';
+    else if (speed <= 16.2) return '<b>Light</b> (0.6-16.2 mph)';
+    else if (speed <= 25.5) return '<b>Moderate</b> (16.2-25.5 mph)';
+    else if (speed <= 37.3) return '<b>Strong</b> (25.5-37.3 mph)';
+    else return '<b>Extreme</b> (> 37.3 mph)';
+  };
+
   return object
     ? {
         html: `\
-      <div><b>${object.properties.stationName}</b></div>
-
-      <div><b>Snow Depth</b></div>
-      <div>${object.properties.totalSnowDepth} in</div>
-      <div><b>Snow Depth Change</b></div>
+      <div style="text-decoration: underline; font-size: 1.2em;"><b>${
+        object.properties.stationName
+      }</b></div>
+      <div style="text-decoration: underline;"><b>Snow Depth Change</b></div>
       <div>${object.properties.totalSnowDepthChange} in</div>
-      <div><b>1 Hour Precipitation</b></div>
-      <div>${object.properties.precipAccumOneHour}</div>
-      <div><b>Current Air Temperature</b></div>
-      <div>${object.properties.curAirTemp} °F</div>
-      <div><b>Current Wind Speed</b></div>
-      <div>${object.properties.curWindSpeed}</div>
-      <div><b>Wind Direction</b></div>
+      <div style="text-decoration: underline;"><b>Temperature Conditions</b></div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        ${getTempConditionWithRange(
+          parseFloat(object.properties.airTempMax)
+        )} 
+        <div style="width: 20px; height: 20px; background-color: ${getTempConditionColor(
+          parseFloat(object.properties.airTempMax)
+        )}; border: 1px solid black; display: inline-block;"></div>
+        (<b>${object.properties.airTempMax} °F</b>)
+      </div>
+      <div style="text-decoration: underline;"><b>Wind Information</b></div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        ${getWindStrengthWithRange(
+          parseFloat(object.properties.curWindSpeed)
+        )} 
+        <div style="width: 20px; height: 20px; background-color: ${getWindStrengthColor(
+          parseFloat(object.properties.curWindSpeed)
+        )}; border: 1px solid black; display: inline-block;"></div>
+        (<b>${object.properties.curWindSpeed}</b>)
+      </div>
+      <div style="text-decoration: underline;"><b>Wind Direction</b></div>
       <div>${object.properties.windDirection}</div>
     `,
       }
