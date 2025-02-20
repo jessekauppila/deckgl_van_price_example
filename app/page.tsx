@@ -1,28 +1,29 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { createRoot } from 'react-dom/client';
-//import { Map } from 'react-map-gl/maplibre';
-import { Map } from 'react-map-gl';
-import { TerrainLayer } from '@deck.gl/geo-layers';
-
-import DeckGL from '@deck.gl/react';
-import {
-  IconLayer,
-  GeoJsonLayer,
-  TextLayerPolygonLayer,
-  PolygonLayer,
-} from '@deck.gl/layers';
-import { _TerrainExtension as TerrainExtension } from '@deck.gl/extensions';
-import type { TerrainLayerProps } from '@deck.gl/geo-layers';
 import type {
   Color,
   MapViewState,
   PickingInfo,
   _SunLight as SunLight,
   Position,
+  Deck,
+  Widget,
 } from '@deck.gl/core';
-
+import DeckGL, { useWidget } from '@deck.gl/react'; //, { CompassWidget }
+import {
+  IconLayer,
+  GeoJsonLayer,
+  TextLayerPolygonLayer,
+  PolygonLayer,
+} from '@deck.gl/layers';
+import { createPortal } from 'react-dom';
+import { _TerrainExtension as TerrainExtension } from '@deck.gl/extensions';
+import type { TerrainLayerProps } from '@deck.gl/geo-layers';
+import { createRoot } from 'react-dom/client';
+//import { Map } from 'react-map-gl/maplibre';
+import { Map } from 'react-map-gl';
+import { TerrainLayer } from '@deck.gl/geo-layers';
 import type {
   FeatureCollection,
   Feature,
@@ -41,7 +42,36 @@ import {
   SnowDepth_BlockProperties,
 } from './deckGL/snowDepthChange';
 
+interface MyWidgetProps {
+  element: HTMLDivElement;
+}
+
+class MyWidget implements Widget {
+  id: string;
+  props: MyWidgetProps;
+
+  constructor(props: MyWidgetProps) {
+    this.id = 'my-widget';
+    this.props = { ...props };
+  }
+
+  onAdd(): HTMLDivElement {
+    return this.props.element;
+  }
+
+  setProps(props: Partial<MyWidgetProps>): void {
+    this.props = { ...this.props, ...props };
+  }
+}
+
+const MyReactWidget: React.FC<Record<string, never>> = (props) => {
+  const element = useMemo(() => document.createElement('div'), []);
+  const _widget = useWidget(MyWidget, { ...props, element });
+  return createPortal(<div>Hello World</div>, element);
+};
+
 //////////////////////
+
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN; // eslint-disable-line
 const TERRAIN_IMAGE = `https://api.mapbox.com/v4/mapbox.terrain-rgb/{z}/{x}/{y}.png?access_token=${MAPBOX_TOKEN}`;
 const SURFACE_IMAGE = `https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}@2x.png?access_token=${MAPBOX_TOKEN}`;
@@ -270,6 +300,7 @@ export default function App({
           process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN
         }
       />
+      <MyReactWidget />
     </DeckGL>
   );
 }
