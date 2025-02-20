@@ -1,5 +1,6 @@
 'use client';
 
+import 'mapbox-gl/dist/mapbox-gl.css';
 import React, { useState, useEffect, useMemo } from 'react';
 import type {
   Color,
@@ -41,6 +42,12 @@ import {
   snowDepth_getTooltip,
   SnowDepth_BlockProperties,
 } from './deckGL/snowDepthChange';
+import {
+  Switch,
+  FormGroup,
+  FormControlLabel,
+  Typography,
+} from '@mui/material';
 
 interface MyWidgetProps {
   element: HTMLDivElement;
@@ -83,50 +90,75 @@ const MyReactWidget: React.FC<{
         position: 'absolute',
         top: 10,
         left: 10,
-        background: 'white',
-        padding: '10px',
+        background: 'rgb(0, 0, 0, .1)', //
+        padding: '8px',
         borderRadius: '5px',
         boxShadow: '0px 4px 6px rgba(0,0,0,0.1)',
         pointerEvents: 'auto',
         zIndex: 1,
       }}
     >
-      <h4>Toggle Layers</h4>
-      <label>
-        <input
-          type="checkbox"
-          checked={layersState.forecastZones}
-          onChange={() => toggleLayer('forecastZones')}
+      <Typography variant="h6" sx={{ fontSize: '1rem', mb: 1 }}>
+        {/* Layers */}
+      </Typography>
+      <FormGroup>
+        <FormControlLabel
+          control={
+            <Switch
+              size="small"
+              checked={layersState.forecastZones}
+              onChange={() => toggleLayer('forecastZones')}
+            />
+          }
+          label={
+            <Typography sx={{ fontSize: '0.875rem' }}>
+              Forecast Zones
+            </Typography>
+          }
         />
-        Forecast Zones
-      </label>
-      <br />
-      <label>
-        <input
-          type="checkbox"
-          checked={layersState.ground}
-          onChange={() => toggleLayer('ground')}
+        <FormControlLabel
+          control={
+            <Switch
+              size="small"
+              checked={layersState.ground}
+              onChange={() => toggleLayer('ground')}
+            />
+          }
+          label={
+            <Typography sx={{ fontSize: '0.875rem' }}>
+              Ground
+            </Typography>
+          }
         />
-        Ground
-      </label>
-      <br />
-      <label>
-        <input
-          type="checkbox"
-          checked={layersState.weatherStations}
-          onChange={() => toggleLayer('weatherStations')}
+        <FormControlLabel
+          control={
+            <Switch
+              size="small"
+              checked={layersState.windArrows}
+              onChange={() => toggleLayer('windArrows')}
+            />
+          }
+          label={
+            <Typography sx={{ fontSize: '0.875rem' }}>
+              Wind Arrows
+            </Typography>
+          }
         />
-        Weather Stations
-      </label>
-      <br />
-      <label>
-        <input
-          type="checkbox"
-          checked={layersState.geojson}
-          onChange={() => toggleLayer('geojson')}
+        <FormControlLabel
+          control={
+            <Switch
+              size="small"
+              checked={layersState.snowDepthChange}
+              onChange={() => toggleLayer('snowDepthChange')}
+            />
+          }
+          label={
+            <Typography sx={{ fontSize: '0.875rem' }}>
+              Snow Depth Change
+            </Typography>
+          }
         />
-        Snow Depth
-      </label>
+      </FormGroup>
     </div>,
     element
   );
@@ -187,8 +219,9 @@ export default function App({
   const [layersState, setLayersState] = useState({
     forecastZones: true,
     ground: true,
-    weatherStations: true,
-    geojson: false,
+    windArrows: true,
+    snowDepthChange: false,
+    //windArrows: true,
   });
 
   // Function to toggle a layer's visibility
@@ -220,9 +253,9 @@ export default function App({
         getFillColor: [0, 0, 0, 0], // Just transparent, no white or opacity setting
       }),
 
-    layersState.weatherStations &&
+    layersState.windArrows &&
       new IconLayer({
-        id: 'weather-stations',
+        id: 'windArrows',
         data: data.features,
         billboard: false,
         autoHighlight: true,
@@ -275,9 +308,9 @@ export default function App({
         sizeScale: 1,
       }),
 
-    layersState.geojson &&
+    layersState.snowDepthChange &&
       new GeoJsonLayer<SnowDepth_BlockProperties>({
-        id: 'geojson',
+        id: 'snowDepthChange',
         data: data,
         opacity: 0.8,
         stroked: false,
@@ -315,19 +348,26 @@ export default function App({
         },
       }),
 
-    //extensions: [new TerrainExtension()],
-
-    // new TerrainLayer({
-    //   id: 'terrain',
-    //   minZoom: 0,
-    //   strategy: 'no-overlap',
-    //   elevationDecoder: ELEVATION_DECODER,
-    //   elevationData: TERRAIN_IMAGE,
-    //   texture: SURFACE_IMAGE,
-    //   wireframe: false,
-    //   color: [255, 255, 255],
-    //   operation: 'terrain+draw',
-    // }),
+    new TerrainLayer({
+      id: 'terrain',
+      minZoom: 0,
+      maxZoom: 15,
+      strategy: 'no-overlap',
+      elevationDecoder: ELEVATION_DECODER,
+      elevationData: TERRAIN_IMAGE,
+      texture: SURFACE_IMAGE,
+      wireframe: false,
+      color: [255, 255, 255],
+      material: {
+        diffuse: 1,
+      },
+      operation: 'terrain+draw',
+      loadOptions: {
+        fetch: {
+          mode: 'cors',
+        },
+      },
+    }),
   ];
 
   return (
