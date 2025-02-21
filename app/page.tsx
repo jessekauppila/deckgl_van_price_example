@@ -36,7 +36,7 @@ import forecastZonesData from './data/forecastZones.json';
 import {
   snowDepth_COLOR_SCALE,
   INITIAL_VIEW_STATE,
-  MAP_STYLE,
+  snowDepth_MAP_STYLE, // Make sure this is exported
   snowDepth_lightingEffect,
   snowDepth_weatherToGeoJSON,
   snowDepth_getTooltip,
@@ -400,14 +400,14 @@ export default function App({
         try {
           // Handle snow depth layer
           if (
-            info.layer?.id === 'snowDepthChange' &&
+            info.layer?.id === 'geojson' &&
             info.object?.properties
           ) {
             return snowDepth_getTooltip(info);
           }
 
           // Handle weather station icons
-          if (info.layer?.id === 'windArrows') {
+          if (info.layer?.id === 'weather-stations') {
             return {
               html: `<div>${info.object.name}</div>`,
             };
