@@ -400,14 +400,14 @@ export default function App({
         try {
           // Handle snow depth layer
           if (
-            info.layer?.id === 'geojson' &&
+            info.layer?.id === 'snowDepthChange' &&
             info.object?.properties
           ) {
             return snowDepth_getTooltip(info);
           }
 
           // Handle weather station icons
-          if (info.layer?.id === 'weather-stations') {
+          if (info.layer?.id === 'windArrows') {
             return {
               html: `<div>${info.object.name}</div>`,
             };
