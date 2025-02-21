@@ -49,17 +49,17 @@ import {
   Typography,
 } from '@mui/material';
 
-interface MyWidgetProps {
+interface LayersWidgetProps {
   element: HTMLDivElement;
   toggleLayer: (id: string) => void;
   layersState: Record<string, boolean>;
 }
 
-class MyWidget implements Widget {
+class LayersWidget implements Widget {
   id: string;
-  props: MyWidgetProps;
+  props: LayersWidgetProps;
 
-  constructor(props: MyWidgetProps) {
+  constructor(props: LayersWidgetProps) {
     this.id = 'my-widget';
     this.props = { ...props };
   }
@@ -68,7 +68,7 @@ class MyWidget implements Widget {
     return this.props.element;
   }
 
-  setProps(props: Partial<MyWidgetProps>): void {
+  setProps(props: Partial<LayersWidgetProps>): void {
     this.props = { ...this.props, ...props };
   }
 }
@@ -78,7 +78,7 @@ const MyReactWidget: React.FC<{
   layersState: Record<string, boolean>;
 }> = ({ toggleLayer, layersState }) => {
   const element = useMemo(() => document.createElement('div'), []);
-  const _widget = useWidget(MyWidget, {
+  const _widget = useWidget(LayersWidget, {
     element,
     toggleLayer,
     layersState,
@@ -90,73 +90,82 @@ const MyReactWidget: React.FC<{
         position: 'absolute',
         top: 10,
         left: 10,
-        background: 'rgb(0, 0, 0, .1)', //
+        width: '200px',
+        background: 'rgb(0, 0, 0, .2)',
         padding: '8px',
         borderRadius: '5px',
-        boxShadow: '0px 4px 6px rgba(0,0,0,0.1)',
+        //boxShadow: '0px 4px 6px rgba(0,0,0,0)',
         pointerEvents: 'auto',
         zIndex: 1,
+        color: '#e0e0e0',
       }}
     >
-      <Typography variant="h6" sx={{ fontSize: '1rem', mb: 1 }}>
+      <Typography
+        variant="h6"
+        sx={{ fontSize: '1rem', mb: 1, color: 'inherit' }}
+      >
         {/* Layers */}
       </Typography>
       <FormGroup>
         <FormControlLabel
+          sx={formControlStyle(layersState.forecastZones)}
           control={
             <Switch
               size="small"
               checked={layersState.forecastZones}
               onChange={() => toggleLayer('forecastZones')}
+              sx={switchStyle}
             />
           }
-          label={
-            <Typography sx={{ fontSize: '0.875rem' }}>
-              Forecast Zones
-            </Typography>
-          }
+          label="Forecast Zones"
         />
-        <FormControlLabel
+        {/* <FormControlLabel
+          sx={formControlStyle(layersState.ground_for_shadow)}
           control={
             <Switch
               size="small"
-              checked={layersState.ground}
-              onChange={() => toggleLayer('ground')}
+              checked={layersState.ground_for_shadow}
+              onChange={() => toggleLayer('ground_for_shadow')}
+              sx={switchStyle}
             />
           }
-          label={
-            <Typography sx={{ fontSize: '0.875rem' }}>
-              Ground
-            </Typography>
-          }
-        />
+          label="Ground for Shadows"
+        /> */}
         <FormControlLabel
+          sx={formControlStyle(layersState.windArrows)}
           control={
             <Switch
               size="small"
               checked={layersState.windArrows}
               onChange={() => toggleLayer('windArrows')}
+              sx={switchStyle}
             />
           }
-          label={
-            <Typography sx={{ fontSize: '0.875rem' }}>
-              Wind Arrows
-            </Typography>
-          }
+          label="Wind Arrows"
         />
         <FormControlLabel
+          sx={formControlStyle(layersState.snowDepthChange)}
           control={
             <Switch
               size="small"
               checked={layersState.snowDepthChange}
               onChange={() => toggleLayer('snowDepthChange')}
+              sx={switchStyle}
             />
           }
-          label={
-            <Typography sx={{ fontSize: '0.875rem' }}>
-              Snow Depth Change
-            </Typography>
+          label="Snow Depth Change"
+        />
+        <FormControlLabel
+          sx={formControlStyle(layersState.terrain)}
+          control={
+            <Switch
+              size="small"
+              checked={layersState.terrain}
+              onChange={() => toggleLayer('terrain')}
+              sx={switchStyle}
+            />
           }
+          label="Terrain"
         />
       </FormGroup>
     </div>,
@@ -203,6 +212,28 @@ type ForecastZones = {
   contour: [number, number][];
 };
 
+const switchStyle = {
+  '& .MuiSwitch-switchBase': {
+    color: '#424242', // dark grey when unchecked
+    '&.Mui-checked': {
+      color: '#9e9e9e', // medium grey when checked (instead of white)
+      '& + .MuiSwitch-track': {
+        backgroundColor: '#757575', // slightly darker grey track when checked
+      },
+    },
+  },
+  '& .MuiSwitch-track': {
+    backgroundColor: '#616161', // dark grey track when unchecked
+  },
+};
+
+const formControlStyle = (isChecked: boolean) => ({
+  '& .MuiTypography-root': {
+    color: isChecked ? '#9e9e9e' : '#424242',
+    fontSize: '0.75rem',
+  },
+});
+
 export default function App({
   data = snowDepth_weatherToGeoJSON(station_data),
 }: {
@@ -218,10 +249,10 @@ export default function App({
   // Store layer visibility in state
   const [layersState, setLayersState] = useState({
     forecastZones: true,
-    ground: true,
+    ground_for_shadow: true,
     windArrows: true,
-    snowDepthChange: false,
-    //windArrows: true,
+    snowDepthChange: true,
+    terrain: false,
   });
 
   // Function to toggle a layer's visibility
@@ -243,9 +274,9 @@ export default function App({
         pickable: true,
       }),
 
-    layersState.ground &&
+    layersState.ground_for_shadow &&
       new PolygonLayer<Position[]>({
-        id: 'ground',
+        id: 'ground_for_shadow',
         data: landCover,
         stroked: false,
         filled: true,
@@ -277,21 +308,6 @@ export default function App({
           else strength = 'extreme';
 
           return `wind-direction-${direction}-${strength}`;
-        },
-        tintColor: (f) => {
-          const speed = parseFloat(
-            f.properties.windSpeedAvg?.split(' ')[0] || '0'
-          );
-
-          if (speed <= 0.6)
-            return [255, 255, 255, 255]; // White for calm
-          else if (speed <= 16.2)
-            return [255, 255, 180, 255]; // Pastel yellow for light
-          else if (speed <= 25.5) return [255, 218, 185, 255];
-          // Pastel orange/peach for moderate
-          else if (speed <= 37.3)
-            return [255, 182, 193, 255]; // Pastel red/pink for strong
-          else return [220, 20, 60, 255]; // Deeper red for extreme
         },
         getPosition: (f) => [
           f.properties.longitude,
@@ -348,26 +364,27 @@ export default function App({
         },
       }),
 
-    new TerrainLayer({
-      id: 'terrain',
-      minZoom: 0,
-      maxZoom: 15,
-      strategy: 'no-overlap',
-      elevationDecoder: ELEVATION_DECODER,
-      elevationData: TERRAIN_IMAGE,
-      texture: SURFACE_IMAGE,
-      wireframe: false,
-      color: [255, 255, 255],
-      material: {
-        diffuse: 1,
-      },
-      operation: 'terrain+draw',
-      loadOptions: {
-        fetch: {
-          mode: 'cors',
+    layersState.terrain &&
+      new TerrainLayer({
+        id: 'terrain',
+        minZoom: 0,
+        maxZoom: 15,
+        strategy: 'no-overlap',
+        elevationDecoder: ELEVATION_DECODER,
+        elevationData: TERRAIN_IMAGE,
+        texture: SURFACE_IMAGE,
+        wireframe: false,
+        color: [255, 255, 255],
+        material: {
+          diffuse: 1,
         },
-      },
-    }),
+        operation: 'terrain+draw',
+        loadOptions: {
+          fetch: {
+            mode: 'cors',
+          },
+        },
+      }),
   ];
 
   return (
@@ -382,14 +399,14 @@ export default function App({
         try {
           // Handle snow depth layer
           if (
-            info.layer?.id === 'geojson' &&
+            info.layer?.id === 'snowDepthChange' &&
             info.object?.properties
           ) {
             return snowDepth_getTooltip(info);
           }
 
           // Handle weather station icons
-          if (info.layer?.id === 'weather-stations') {
+          if (info.layer?.id === 'windArrows') {
             return {
               html: `<div>${info.object.name}</div>`,
             };
